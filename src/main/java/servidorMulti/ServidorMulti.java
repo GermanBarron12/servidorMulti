@@ -19,10 +19,10 @@ public class ServidorMulti {
             while (true) {
                 Socket socket = servidorSocket.accept();
  
-                unCliente uncliente = new unCliente(socket);
+                String idCliente = Integer.toString(contador);
+                unCliente uncliente = new unCliente(socket, idCliente);
                 Thread hilo = new Thread(uncliente);
  
-                String idCliente = Integer.toString(contador);
                 clientes.put(idCliente, uncliente);
  
                 hilo.start();
@@ -32,6 +32,7 @@ public class ServidorMulti {
                 contador++;
             }
         } catch (IOException e) {
+            System.out.println("Error en servidor: " + e.getMessage());
         }
     }
 }
