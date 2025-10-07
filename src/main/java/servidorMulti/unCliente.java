@@ -31,15 +31,18 @@ public class unCliente implements Runnable {
                     
                     unCliente cliente = ServidorMulti.clientes.get(aQuien);
                     if (cliente != null) {
-                        // Enviar mensaje privado con identificador del remitente
+                        // Enviar mensaje privado SOLO al destinatario (no al remitente)
                         cliente.salida.writeUTF("[Privado de Cliente #" + idCliente + "]: " + contenido);
                         cliente.salida.flush();
                     }
                 } else {
-                    // Broadcast a todos con identificador del remitente
+                    // Broadcast a todos EXCEPTO al remitente
                     for (unCliente cliente : ServidorMulti.clientes.values()) {
-                        cliente.salida.writeUTF("[Cliente #" + idCliente + "]: " + mensaje);
-                        cliente.salida.flush();
+                        // Verificar que no sea el mismo cliente que envió el mensaje
+                        if (!cliente.idCliente.equals(this.idCliente)) {
+                            cliente.salida.writeUTF("[Cliente #" + idCliente + "]: " + mensaje);
+                            cliente.salida.flush();
+                        }
                     }
                 }
  
