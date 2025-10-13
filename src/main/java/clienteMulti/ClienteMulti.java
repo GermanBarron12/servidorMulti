@@ -1,23 +1,26 @@
 package clienteMulti;
-
 import java.io.IOException;
 import java.net.Socket;
 
 public class ClienteMulti {
-
     public static void main(String[] args) throws IOException {
         
         Socket s = null;
         try {
             s = new Socket("localhost", 8080);
  
-            Thread hiloParaMandar = new Thread(new ParaMandar(s), "sender");
-            Thread hiloParaRecibir = new Thread(new ParaRecibir(s), "receiver");
+            ParaMandar paraMandar = new ParaMandar(s);
+            ParaRecibir paraRecibir = new ParaRecibir(s);
+            
+            // Conectar los hilos para compartir el estado de autenticación
+            paraMandar.setParaRecibir(paraRecibir);
+            
+            Thread hiloParaMandar = new Thread(paraMandar, "sender");
+            Thread hiloParaRecibir = new Thread(paraRecibir, "receiver");
  
             hiloParaMandar.start();
             hiloParaRecibir.start();
  
-            // Espera a que el usuario termine (por ejemplo, escribiendo "salir")
             hiloParaMandar.join();
  
         } catch (Exception e) {
@@ -28,5 +31,4 @@ public class ClienteMulti {
             }
         }
     }
-
 }
