@@ -1,4 +1,5 @@
 package clienteMulti;
+
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -11,7 +12,7 @@ public class ParaMandar implements Runnable {
     private final Socket socket;
     private int mensajesEnviados = 0;
     private boolean autenticado = false;
-    private ParaRecibir paraRecibir; // Referencia al hilo receptor
+    private ParaRecibir paraRecibir;
  
     public ParaMandar(Socket s) throws IOException {
         this.socket = s;
@@ -25,17 +26,26 @@ public class ParaMandar implements Runnable {
     @Override
     public void run() {
         try {
-            System.out.println("=== BIENVENIDO AL CHAT ===");
-            System.out.println("Tienes 3 mensajes gratis. Despues tienes que registrarte o iniciar sesion.");
-            System.out.println("Comandos: /registro <usuario> <password> | /login <usuario> <password> | salir");
-            System.out.println("==========================\n");
+            System.out.println("╔══════════════════════════════════════════╗");
+            System.out.println("║      BIENVENIDO AL CHAT                  ║");
+            System.out.println("╚══════════════════════════════════════════╝");
+            System.out.println("Tienes 3 mensajes gratis.");
+            System.out.println("\n📋 Comandos:");
+            System.out.println("   /registro <usuario> <password>");
+            System.out.println("   /login <usuario> <password>");
+            System.out.println("   /bloquear <usuario>");
+            System.out.println("   /desbloquear <usuario>");
+            System.out.println("   /bloqueados");
+            System.out.println("   /ayuda");
+            System.out.println("   salir\n");
             
             while (true) {
                 String mensaje = teclado.readLine();
                 if (mensaje == null) break;
  
-                // Verificar comandos especiales
-                if (mensaje.startsWith("/registro ") || mensaje.startsWith("/login ")) {
+                if (mensaje.startsWith("/registro ") || mensaje.startsWith("/login ") ||
+                    mensaje.startsWith("/bloquear ") || mensaje.startsWith("/desbloquear ") ||
+                    mensaje.equals("/bloqueados") || mensaje.equals("/ayuda")) {
                     salida.writeUTF(mensaje);
                     salida.flush();
                     continue;
@@ -44,26 +54,22 @@ public class ParaMandar implements Runnable {
                 if ("salir".equalsIgnoreCase(mensaje)) {
                     salida.writeUTF(mensaje);
                     salida.flush();
-                    System.out.println("Cerrando conexion...");
+                    System.out.println("\n👋 Cerrando conexion...");
                     socket.close();
                     break;
                 }
                 
-                // Verificar autenticación desde ParaRecibir
                 if (paraRecibir != null) {
                     autenticado = paraRecibir.isAutenticado();
                 }
                 
-                // Verificar si puede enviar mensajes
                 if (!autenticado && mensajesEnviados >= 3) {
-                    System.out.println("\n️  Has alcanzado el limite de 3 mensajes gratis");
-                    System.out.println("Por favor, registrate o inicia sesion para continuar enviando mensajes.");
-                    System.out.println("Usa: /registro <usuario> <password> o /login <usuario> <password>");
-                    System.out.println("Puedes seguir viendo los mensajes de otros usuarios.\n");
+                    System.out.println("\n⚠️ Has alcanzado el limite de 3 mensajes");
+                    System.out.println("Usa: /registro <usuario> <password>");
+                    System.out.println("O:   /login <usuario> <password>\n");
                     continue;
                 }
                 
-                // Enviar mensaje normal
                 salida.writeUTF(mensaje);
                 salida.flush();
                 
@@ -71,12 +77,12 @@ public class ParaMandar implements Runnable {
                     mensajesEnviados++;
                     int restantes = 3 - mensajesEnviados;
                     if (restantes > 0) {
-                        System.out.println("(Te quedan " + restantes + " mensajes gratuitos)");
+                        System.out.println("💡 (Te quedan " + restantes + " mensajes)");
                     }
                 }
             }
         } catch (IOException ex) {
-            System.out.println("Error en ParaMandar: " + ex.getMessage());
+            System.out.println("❌ Error: " + ex.getMessage());
         }
     }
 }

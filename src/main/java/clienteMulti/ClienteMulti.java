@@ -1,4 +1,5 @@
 package clienteMulti;
+
 import java.io.IOException;
 import java.net.Socket;
 
@@ -12,7 +13,6 @@ public class ClienteMulti {
             ParaMandar paraMandar = new ParaMandar(s);
             ParaRecibir paraRecibir = new ParaRecibir(s);
             
-            // Conectar los hilos para compartir el estado de autenticación
             paraMandar.setParaRecibir(paraRecibir);
             
             Thread hiloParaMandar = new Thread(paraMandar, "sender");
@@ -24,7 +24,7 @@ public class ClienteMulti {
             hiloParaMandar.join();
  
         } catch (Exception e) {
-            System.out.println("Error en ClienteMulti: " + e.getMessage());
+            System.out.println("❌ Error: " + e.getMessage());
         } finally {
             if (s != null && !s.isClosed()) {
                 try { s.close(); } catch (IOException ignore) {}
