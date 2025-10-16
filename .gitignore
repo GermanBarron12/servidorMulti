@@ -2,3 +2,10 @@ chat_usuarios.db
 # Ignorar la carpeta target generada por Maven o NetBeans
 /target/
 usuarios.txt
+dependency-reduced-pom.xml
+
+# Archivos de base de datos locales
+*.db
+
+# Archivos de NetBeans
+nbproject/private/
