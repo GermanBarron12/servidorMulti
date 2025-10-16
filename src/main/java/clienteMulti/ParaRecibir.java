@@ -1,4 +1,5 @@
 package clienteMulti;
+
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.Socket;
@@ -17,16 +18,15 @@ public class ParaRecibir implements Runnable {
             while (true) {
                 String mensaje = entrada.readUTF();
                 
-                // Detectar autenticación exitosa
-                if (mensaje.startsWith("Registro exitoso") || 
-                    mensaje.startsWith("Inicio de sesión exitoso")) {
+                if (mensaje.contains("Registro exitoso") || 
+                    mensaje.contains("Inicio de sesion exitoso")) {
                     autenticado = true;
                 }
                 
                 System.out.println(mensaje);
             }
         } catch (IOException e) {
-            System.out.println("Conexion cerrada.");
+            System.out.println("\n🔌 Conexion cerrada.");
         } finally {
             try { entrada.close(); } catch (IOException ignored) {}
         }
