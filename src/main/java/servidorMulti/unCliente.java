@@ -1,69 +1,65 @@
 package servidorMulti;
-import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+
+import java.io.*;
 import java.net.Socket;
 
 public class unCliente implements Runnable {
     final DataOutputStream salida;
-    final BufferedReader teclado = new BufferedReader(new InputStreamReader(System.in));
     final DataInputStream entrada;
     final String idCliente;
+
     private int mensajesEnviados = 0;
     private boolean autenticado = false;
     private String nombreUsuario = null;
- 
+
     unCliente(Socket s, String id) throws IOException {
         salida = new DataOutputStream(s.getOutputStream());
         entrada = new DataInputStream(s.getInputStream());
         this.idCliente = id;
     }
- 
+
     @Override
     public void run() {
         try {
-            // Mensaje de bienvenida
             salida.writeUTF("Conectado al servidor. ID: #" + idCliente);
             salida.flush();
-            
+
             while (true) {
                 String mensaje = entrada.readUTF();
- 
+
                 // Comando de registro
                 if (mensaje.startsWith("/registro ")) {
                     procesarRegistro(mensaje);
                     continue;
                 }
-                
+
                 // Comando de login
                 if (mensaje.startsWith("/login ")) {
                     procesarLogin(mensaje);
                     continue;
                 }
-                
+
                 // Salir
                 if ("salir".equalsIgnoreCase(mensaje)) {
                     break;
                 }
-                
-                // Verificar límite de mensajes
+
+                // Limite de mensajes
                 if (!autenticado) {
                     if (mensajesEnviados >= 3) {
-                        salida.writeUTF("limite de mensajes alcanzado. Debes registrarte o iniciar sesion.");
+                        salida.writeUTF("⚠️ Límite de mensajes alcanzado. Regístrate o inicia sesión.");
                         salida.flush();
                         continue;
                     }
                     mensajesEnviados++;
                 }
-                
+
                 // Mensaje privado
                 if (mensaje.startsWith("@")) {
                     String[] partes = mensaje.split(" ", 2);
                     String aQuien = partes[0].substring(1);
                     String contenido = partes.length > 1 ? partes[1] : "";
-                    
+
                     unCliente cliente = ServidorMulti.clientes.get(aQuien);
                     if (cliente != null) {
                         String remitente = autenticado ? nombreUsuario : "Cliente #" + idCliente;
@@ -74,7 +70,7 @@ public class unCliente implements Runnable {
                         salida.flush();
                     }
                 } else {
-                    // Broadcast a todos excepto al remitente
+                    // Broadcast
                     String remitente = autenticado ? nombreUsuario : "Cliente #" + idCliente;
                     for (unCliente cliente : ServidorMulti.clientes.values()) {
                         if (!cliente.idCliente.equals(this.idCliente)) {
@@ -84,6 +80,7 @@ public class unCliente implements Runnable {
                     }
                 }
             }
+
         } catch (IOException ex) {
             System.out.println("Cliente #" + idCliente + " desconectado");
         } finally {
@@ -94,7 +91,7 @@ public class unCliente implements Runnable {
             } catch (IOException ignored) {}
         }
     }
-    
+
     private void procesarRegistro(String mensaje) throws IOException {
         String[] partes = mensaje.split(" ");
         if (partes.length != 3) {
@@ -102,35 +99,33 @@ public class unCliente implements Runnable {
             salida.flush();
             return;
         }
-        
+
         String usuario = partes[1];
         String password = partes[2];
-        
-        synchronized (ServidorMulti.usuarios) {
-            if (ServidorMulti.usuarios.containsKey(usuario)) {
-                salida.writeUTF("El usuario '" + usuario + "' ya existe.");
-                salida.flush();
-                return;
-            }
-            
-            // Guardar en memoria
-            ServidorMulti.usuarios.put(usuario, password);
-            
-            // Guardar en archivo (PERSISTENCIA)
-            ServidorMulti.guardarUsuario(usuario, password);
-            
+
+        if (DatabaseManager.usuarioExiste(usuario)) {
+            salida.writeUTF("El usuario '" + usuario + "' ya existe.");
+            salida.flush();
+            return;
+        }
+
+        boolean exito = DatabaseManager.registrarUsuario(usuario, password);
+        if (exito) {
             autenticado = true;
             nombreUsuario = usuario;
             mensajesEnviados = 0;
-            
+
             salida.writeUTF("Registro exitoso. Bienvenido, " + usuario + "!");
             salida.writeUTF("Ahora puedes enviar mensajes ilimitados.");
             salida.flush();
-            
-            System.out.println("Usuario registrado: " + usuario);
+
+            System.out.println("🆕 Usuario registrado en DB: " + usuario);
+        } else {
+            salida.writeUTF("❌ Error al registrar usuario.");
+            salida.flush();
         }
     }
-    
+
     private void procesarLogin(String mensaje) throws IOException {
         String[] partes = mensaje.split(" ");
         if (partes.length != 3) {
@@ -138,32 +133,31 @@ public class unCliente implements Runnable {
             salida.flush();
             return;
         }
-        
+
         String usuario = partes[1];
         String password = partes[2];
-        
-        synchronized (ServidorMulti.usuarios) {
-            if (!ServidorMulti.usuarios.containsKey(usuario)) {
-                salida.writeUTF("El usuario '" + usuario + "' no existe.");
-                salida.flush();
-                return;
-            }
-            
-            if (!ServidorMulti.usuarios.get(usuario).equals(password)) {
-                salida.writeUTF("Contraseña incorrecta.");
-                salida.flush();
-                return;
-            }
-            
-            autenticado = true;
-            nombreUsuario = usuario;
-            mensajesEnviados = 0;
-            
-            salida.writeUTF("Inicio de sesion exitoso. Bienvenido de nuevo, " + usuario + "!");
-            salida.writeUTF("Ahora puedes enviar mensajes ilimitados.");
+
+        if (!DatabaseManager.usuarioExiste(usuario)) {
+            salida.writeUTF("El usuario '" + usuario + "' no existe.");
             salida.flush();
-            
-            System.out.println("Usuario autenticado: " + usuario);
+            return;
         }
+
+        boolean valido = DatabaseManager.verificarLogin(usuario, password);
+        if (!valido) {
+            salida.writeUTF("Contraseña incorrecta.");
+            salida.flush();
+            return;
+        }
+
+        autenticado = true;
+        nombreUsuario = usuario;
+        mensajesEnviados = 0;
+
+        salida.writeUTF("Inicio de sesión exitoso. Bienvenido, " + usuario + "!");
+        salida.writeUTF("Ahora puedes enviar mensajes ilimitados.");
+        salida.flush();
+
+        System.out.println("✅ Usuario autenticado: " + usuario);
     }
 }
