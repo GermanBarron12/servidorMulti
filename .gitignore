@@ -1,1 +1,3 @@
 chat_usuarios.db
+# Ignorar la carpeta target generada por Maven o NetBeans
+/target/
