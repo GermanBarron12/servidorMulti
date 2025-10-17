@@ -1,11 +1,17 @@
+# runtime / datos
 chat_usuarios.db
-# Ignorar la carpeta target generada por Maven o NetBeans
-/target/
 usuarios.txt
-dependency-reduced-pom.xml
 
-# Archivos de base de datos locales
-*.db
+# Maven / build
+/target/
+/dependency-reduced-pom.xml
+/mvnw*
+/maven-status/
 
-# Archivos de NetBeans
-nbproject/private/
+# Clases y artefactos
+*.class
+*.jar
+
+# S.O. / editor
+.DS_Store
+Thumbs.db
