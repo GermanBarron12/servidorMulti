@@ -26,7 +26,7 @@ public class ParaRecibir implements Runnable {
                 System.out.println(mensaje);
             }
         } catch (IOException e) {
-            System.out.println("\n🔌 Conexion cerrada.");
+            System.out.println("\n Conexion cerrada.");
         } finally {
             try { entrada.close(); } catch (IOException ignored) {}
         }

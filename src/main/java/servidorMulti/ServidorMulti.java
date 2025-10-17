@@ -15,9 +15,9 @@ public class ServidorMulti {
         int contador = 0;
  
         try (ServerSocket servidorSocket = new ServerSocket(puerto)) {
-            System.out.println("╔════════════════════════════════════════╗");
-            System.out.println("║   SERVIDOR CHAT INICIADO               ║");
-            System.out.println("╚════════════════════════════════════════╝");
+            
+            System.out.println("-------- SERVIDOR CHAT INICIADO --------");
+            
             System.out.println("Puerto: " + puerto);
             System.out.println("Usuarios: " + DatabaseManager.contarUsuarios());
             System.out.println("Esperando conexiones...\n");
@@ -32,7 +32,7 @@ public class ServidorMulti {
                 clientes.put(idCliente, uncliente);
                 hilo.start();
  
-                System.out.println("[CONEXIÓN] Cliente #" + contador);
+                System.out.println("[CONEXION] Cliente #" + contador);
                 contador++;
             }
         } catch (IOException e) {

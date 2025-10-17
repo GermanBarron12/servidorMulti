@@ -24,7 +24,7 @@ public class ClienteMulti {
             hiloParaMandar.join();
  
         } catch (Exception e) {
-            System.out.println("❌ Error: " + e.getMessage());
+            System.out.println("Error: " + e.getMessage());
         } finally {
             if (s != null && !s.isClosed()) {
                 try { s.close(); } catch (IOException ignore) {}
