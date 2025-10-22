@@ -78,6 +78,37 @@ public class unCliente implements Runnable {
                     continue;
                 }
 
+                if (mensaje.startsWith("/gato")) {
+                    procesarInvitacionGato(mensaje);
+                    continue;
+                }
+
+                if (mensaje.startsWith("/aceptar")) {
+                    procesarAceptarGato();
+                    continue;
+                }
+
+                if (mensaje.startsWith("/rechazar")) {
+                    procesarRechazarGato();
+                    continue;
+                }
+              
+
+                if (mensaje.startsWith("/jugar")) {
+                    procesarMovimientoGato(mensaje);
+                    continue;
+                }
+
+                if (mensaje.startsWith("/tablero")) {
+                    mostrarTableroGato();
+                    continue;
+                }
+
+                if (mensaje.startsWith("/rendirse")) {
+                    procesarRendirse();
+                    continue;
+                }
+
                 if (mensaje.equals("/ayuda")) {
                     mostrarAyuda();
                     continue;
@@ -376,5 +407,288 @@ public class unCliente implements Runnable {
         salida.writeUTF("Conectados: " + totalConectados + " usuarios");
         salida.writeUTF("*" + lista);
         salida.flush();
+    }
+
+    private void procesarInvitacionGato(String mensaje) throws IOException {
+        if (!autenticado) {
+            salida.writeUTF("Debes estar autenticado para poder jugar.");
+            salida.flush();
+            return;
+        }
+
+        String[] partes = mensaje.split(" ");
+        if (partes.length != 2) {
+            salida.writeUTF("Usa: /gato <usuario>");
+            salida.flush();
+            return;
+        }
+
+        String invitado = partes[1];
+        if (DatabaseManager.usuarioExiste(invitado)) {
+            salida.writeUTF("❌ El usuario '" + invitado + "' no existe");
+            salida.flush();
+            return;
+        }
+
+        unCliente clienteInvitado = null;
+        for (unCliente c : ServidorMulti.clientes.values()) {
+            if (c.autenticado && c.nombreUsuario != null && c.nombreUsuario.equals(invitado)) {
+                clienteInvitado = c;
+                break;
+
+            }
+        }
+
+        if (clienteInvitado == null) {
+            salida.writeUTF("❌ El usuario '" + invitado + "' no está conectado");
+            salida.flush();
+            return;
+        }
+
+        int resultado = GestorJuegos.enviarInvitacion(nombreUsuario, invitado);
+
+        switch (resultado) {
+            case 1:
+                salida.writeUTF("Invitacion enviada a " + invitado);
+                salida.flush();
+
+                // Notificar al invitado
+                clienteInvitado.salida.writeUTF("- " + nombreUsuario + " te invita a jugar al Gato");
+                clienteInvitado.salida.writeUTF("   Usa /aceptar o /rechazar");
+                clienteInvitado.salida.flush();
+                break;
+            case -1:
+                salida.writeUTF("- " + invitado + " ya tiene una invitacion pendiente");
+                break;
+            case -2:
+                salida.writeUTF("️ Ya tienes una partida activa con " + invitado);
+                break;
+            case -3:
+                salida.writeUTF(" No puedes jugar contigo mismo");
+                break;
+            default:
+                salida.writeUTF(" Error al enviar invitacion");
+        }
+        salida.flush();
+    }
+
+    private void procesarAceptarGato() throws IOException {
+        if (!autenticado) {
+            salida.writeUTF(" Debes estar autenticado");
+            salida.flush();
+            return;
+        }
+
+        if (!GestorJuegos.tieneInvitacionPendiente(nombreUsuario)) {
+            salida.writeUTF(" No tienes invitaciones pendientes");
+            salida.flush();
+            return;
+        }
+
+        JuegoGato juego = GestorJuegos.aceptarInvitacion(nombreUsuario);
+
+        if (juego == null) {
+            salida.writeUTF(" Error al aceptar invitacion");
+            salida.flush();
+            return;
+        }
+
+        // Notificar a ambos jugadores
+        String oponente = juego.getOponente(nombreUsuario);
+        unCliente clienteOponente = buscarClientePorNombre(oponente);
+
+        String tablero = juego.getTableroVisual();
+
+        salida.writeUTF(" ¡Partida iniciada!");
+        salida.writeUTF(tablero);
+        salida.writeUTF(" Usa: /jugar <fila> <columna> (0-2)");
+        salida.writeUTF(" Usa: /tablero para ver el tablero");
+        salida.writeUTF(" Usa: /rendirse para abandonar");
+        salida.flush();
+
+        if (clienteOponente != null) {
+            clienteOponente.salida.writeUTF("- " + nombreUsuario + " acepto! Partida iniciada");
+            clienteOponente.salida.writeUTF(tablero);
+            clienteOponente.salida.writeUTF(" Usa: /jugar <fila> <columna> (0-2)");
+            clienteOponente.salida.writeUTF(" Usa: /tablero para ver el tablero");
+            clienteOponente.salida.writeUTF(" Usa: /rendirse para abandonar");
+            clienteOponente.salida.flush();
+        }
+    }
+
+    private void procesarRechazarGato() throws IOException {
+        if (!autenticado) {
+            salida.writeUTF(" Debes estar autenticado");
+            salida.flush();
+            return;
+        }
+
+        if (!GestorJuegos.tieneInvitacionPendiente(nombreUsuario)) {
+            salida.writeUTF(" No tienes invitaciones pendientes");
+            salida.flush();
+            return;
+        }
+
+        String invitador = GestorJuegos.getInvitador(nombreUsuario);
+        boolean rechazado = GestorJuegos.rechazarInvitacion(nombreUsuario);
+
+        if (rechazado) {
+            salida.writeUTF(" Invitacin rechazada");
+            salida.flush();
+
+            // Notificar al invitador
+            unCliente clienteInvitador = buscarClientePorNombre(invitador);
+            if (clienteInvitador != null) {
+                clienteInvitador.salida.writeUTF(" " + nombreUsuario + " rechazo tu invitacion al Gato");
+                clienteInvitador.salida.flush();
+            }
+        }
+    }
+
+    private void procesarMovimientoGato(String mensaje) throws IOException {
+        if (!autenticado) {
+            salida.writeUTF(" Debes estar autenticado");
+            salida.flush();
+            return;
+        }
+
+        JuegoGato juego = GestorJuegos.obtenerPartida(nombreUsuario);
+
+        if (juego == null) {
+            salida.writeUTF(" No tienes una partida activa");
+            salida.flush();
+            return;
+        }
+
+        String[] partes = mensaje.split(" ");
+        if (partes.length != 3) {
+            salida.writeUTF(" Usa: /jugar <fila> <columna> (0-2)");
+            salida.flush();
+            return;
+        }
+
+        try {
+            int fila = Integer.parseInt(partes[1]);
+            int columna = Integer.parseInt(partes[2]);
+
+            boolean movimientoValido = juego.realizarMovimiento(nombreUsuario, fila, columna);
+
+            if (!movimientoValido) {
+                if (!juego.getTurnoActual().equals(nombreUsuario)) {
+                    salida.writeUTF("️ No es tu turno");
+                } else {
+                    salida.writeUTF(" Movimiento invalido. La casilla debe estar vacia y dentro del tablero");
+                }
+                salida.flush();
+                return;
+            }
+
+            // Mostrar tablero actualizado a ambos jugadores
+            String tablero = juego.getTableroVisual();
+            String oponente = juego.getOponente(nombreUsuario);
+            unCliente clienteOponente = buscarClientePorNombre(oponente);
+
+            salida.writeUTF(tablero);
+            salida.flush();
+
+            if (clienteOponente != null) {
+                clienteOponente.salida.writeUTF(tablero);
+                clienteOponente.salida.flush();
+            }
+
+            // Si el juego terminó
+            if (juego.isJuegoTerminado()) {
+                String ganador = juego.getGanador();
+
+                if (ganador.equals("EMPATE")) {
+                    salida.writeUTF("¡EMPATE! Bien jugado");
+                    salida.flush();
+                    if (clienteOponente != null) {
+                        clienteOponente.salida.writeUTF("¡EMPATE! Bien jugado");
+                        clienteOponente.salida.flush();
+                    }
+                } else {
+                    if (ganador.equals(nombreUsuario)) {
+                        salida.writeUTF("¡FELICIDADES! Ganaste la partida");
+                        salida.flush();
+                        if (clienteOponente != null) {
+                            clienteOponente.salida.writeUTF("Perdiste la partida");
+                            clienteOponente.salida.flush();
+                        }
+                    } else {
+                        salida.writeUTF("Perdiste la partida");
+                        salida.flush();
+                        if (clienteOponente != null) {
+                            clienteOponente.salida.writeUTF("¡FELICIDADES! Ganaste la partida");
+                            clienteOponente.salida.flush();
+                        }
+                    }
+                }
+
+                GestorJuegos.terminarPartida(nombreUsuario);
+            }
+
+        } catch (NumberFormatException e) {
+            salida.writeUTF("Las coordenadas deben ser numeros entre 0 y 2");
+            salida.flush();
+        }
+    }
+
+    private void mostrarTableroGato() throws IOException {
+        if (!autenticado) {
+            salida.writeUTF("Debes estar autenticado");
+            salida.flush();
+            return;
+        }
+
+        JuegoGato juego = GestorJuegos.obtenerPartida(nombreUsuario);
+
+        if (juego == null) {
+            salida.writeUTF("No tienes una partida activa");
+            salida.flush();
+            return;
+        }
+
+        salida.writeUTF(juego.getTableroVisual());
+        salida.flush();
+    }
+
+    private void procesarRendirse() throws IOException {
+        if (!autenticado) {
+            salida.writeUTF("Debes estar autenticado");
+            salida.flush();
+            return;
+        }
+
+        JuegoGato juego = GestorJuegos.obtenerPartida(nombreUsuario);
+
+        if (juego == null) {
+            salida.writeUTF("No tienes una partida activa");
+            salida.flush();
+            return;
+        }
+
+        String oponente = juego.getOponente(nombreUsuario);
+        juego.terminarPorAbandono(nombreUsuario);
+
+        salida.writeUTF("Te has rendido. " + oponente + " gana por abandono");
+        salida.flush();
+
+        unCliente clienteOponente = buscarClientePorNombre(oponente);
+        if (clienteOponente != null) {
+            clienteOponente.salida.writeUTF("- " + nombreUsuario + " se rindio. ¡Ganaste por abandono!");
+            clienteOponente.salida.flush();
+        }
+
+        GestorJuegos.terminarPartida(nombreUsuario);
+    }
+
+    private unCliente buscarClientePorNombre(String nombre) {
+        for (unCliente c : ServidorMulti.clientes.values()) {
+            if (c.autenticado && c.nombreUsuario != null && c.nombreUsuario.equals(nombre)) {
+                return c;
+            }
+        }
+        return null;
     }
 }
