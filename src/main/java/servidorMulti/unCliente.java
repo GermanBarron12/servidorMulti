@@ -455,7 +455,7 @@ public class unCliente implements Runnable {
 
         String invitado = partes[1];
 
-        // PRIMERO: Buscar si está conectado
+        // Buscar si está conectado
         unCliente clienteInvitado = buscarClientePorNombre(invitado);
 
         if (clienteInvitado == null) {
@@ -464,11 +464,12 @@ public class unCliente implements Runnable {
             return;
         }
 
+        // Intentar enviar la invitación
         int resultado = GestorJuegos.enviarInvitacion(nombreUsuario, invitado);
 
         switch (resultado) {
             case 1:
-                salida.writeUTF("Invitación enviada a " + invitado);
+                salida.writeUTF("Invitacion enviada a " + invitado);
                 salida.flush();
 
                 String mensajeInvitacion = """
@@ -490,6 +491,12 @@ public class unCliente implements Runnable {
                 break;
             case -3:
                 salida.writeUTF(" No puedes jugar contigo mismo");
+                break;
+            case -4:
+                salida.writeUTF(" Ya estas en una partida. Terminala primero antes de invitar a alguien mas");
+                break;
+            case -5:
+                salida.writeUTF(" " + invitado + " ya esta en una partida activa");
                 break;
             default:
                 salida.writeUTF(" Error al enviar invitacion");
