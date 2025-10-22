@@ -2,9 +2,7 @@ package servidorMulti;
 
 import java.util.Random;
 
-/**
- * Clase que representa una partida del juego Gato (Tic-Tac-Toe)
- */
+
 public class JuegoGato {
     private final String jugador1;
     private final String jugador2;
