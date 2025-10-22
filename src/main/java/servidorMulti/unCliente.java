@@ -92,7 +92,6 @@ public class unCliente implements Runnable {
                     procesarRechazarGato();
                     continue;
                 }
-              
 
                 if (mensaje.startsWith("/jugar")) {
                     procesarMovimientoGato(mensaje);
@@ -138,12 +137,30 @@ public class unCliente implements Runnable {
         } catch (IOException ex) {
             System.out.println("[DESCONEXION] Cliente #" + idCliente);
         } finally {
+            if (autenticado && nombreUsuario != null) {
+                JuegoGato juego = GestorJuegos.obtenerPartida(nombreUsuario);
+                if (juego != null) {
+                    String oponente = juego.getOponente(nombreUsuario);
+                    juego.terminarPorAbandono(nombreUsuario);
+
+                    unCliente clienteOponente = buscarClientePorNombre(nombreUsuario);
+                    if (clienteOponente != null) {
+                        try {
+                            clienteOponente.salida.writeUTF("- " + nombreUsuario + " se desconecto. !Ganaste por abandono!");
+                            clienteOponente.salida.flush();
+                        } catch (IOException ignored) {
+                        }
+                    }
+                    GestorJuegos.terminarPartida(nombreUsuario);
+                }
+                GestorJuegos.cancelarInvitacion(nombreUsuario);
+            }
+
             ServidorMulti.clientes.remove(idCliente);
             try {
                 entrada.close();
                 salida.close();
-            } catch (IOException ignored) {
-            }
+            } catch (IOException ignored) {}
         }
     }
 
