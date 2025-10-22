@@ -323,7 +323,14 @@ public class unCliente implements Runnable {
         salida.writeUTF(" /bloquear <usuario>");
         salida.writeUTF(" /desbloquear <usuario>");
         salida.writeUTF(" /bloqueados");
-        salida.writeUTF(" /ayuda - Esta ayuda");
+        salida.writeUTF("\n  Juego del gatito");
+        salida.writeUTF(" /gato <usuario> - Invitar a jugar");
+        salida.writeUTF(" /aceptar - Aceptar invitacion");
+        salida.writeUTF(" /rechazar - Rechazar invitacion");
+        salida.writeUTF(" /jugar <fila> <columna> - Hacer jugada (0-2)");
+        salida.writeUTF(" /tablero - Ver tablero actual");
+        salida.writeUTF(" /rendirse - Abandonar partida");
+        salida.writeUTF(" /ayuda - Ver lista de comandos");
         salida.writeUTF(" salir - Cerrar conexion");
         salida.writeUTF("--------------------------------------\n");
         salida.flush();

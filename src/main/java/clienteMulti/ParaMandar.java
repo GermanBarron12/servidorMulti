@@ -38,8 +38,15 @@ public class ParaMandar implements Runnable {
             System.out.println("   /online - Ver quien esta conectado");       
             System.out.println("   /desbloquear <usuario>");
             System.out.println("   /bloqueados");
-            System.out.println("   /ayuda");
-            System.out.println("   salir");
+            System.out.println("\n  Juego del gatito");
+            System.out.println("   /gato <usuario - Invitar a jugar> ");
+            System.out.println("   /aceptar - Aceptar invitacion");
+            System.out.println("   /rechazar - Rechazar invitacion");
+            System.out.println("   /jugar <fila> <columna> - Hacer jugada (0-2)");
+            System.out.println("   /tablero - Ver tablero actual");
+            System.out.println("   /rendirse - Abandonar partida");
+            System.out.println("   /ayuda - Ver lista de comandos");
+            System.out.println("   salir - Cerrar conexion");
             
             System.out.println("---------------------------------------\n");
 
@@ -52,7 +59,10 @@ public class ParaMandar implements Runnable {
                 if (mensaje.startsWith("/registro ") || mensaje.startsWith("/login ")
                         || mensaje.startsWith("/bloquear ") || mensaje.startsWith("/desbloquear ")
                         || mensaje.equals("/bloqueados") || mensaje.equals("/ayuda")
-                        || mensaje.equals("/usuarios") || mensaje.equals("/online")) {
+                        || mensaje.equals("/usuarios") || mensaje.equals("/online")
+                        || mensaje.startsWith("/gato ") || mensaje.equals("/aceptar")
+                        || mensaje.equals("/rechazar") || mensaje.startsWith("/jugar")
+                        || mensaje.equals("/tablero") || mensaje.equals("/rendirse")) {
                     salida.writeUTF(mensaje);
                     salida.flush();
                     continue;
