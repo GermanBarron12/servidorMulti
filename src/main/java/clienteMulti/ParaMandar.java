@@ -27,28 +27,32 @@ public class ParaMandar implements Runnable {
     @Override
     public void run() {
         try {
-            
-            System.out.println("-------- BIENVENIDO AL CHAT --------");
-            
-            System.out.println("Tienes 3 mensajes gratis.");
-            System.out.println("\n Comandos:");
-            System.out.println("   /registro <usuario> <password>");
-            System.out.println("   /login <usuario> <password>");
-            System.out.println("   /usuarios - Ver usuarios registrados");    
-            System.out.println("   /online - Ver quien esta conectado");       
-            System.out.println("   /desbloquear <usuario>");
-            System.out.println("   /bloqueados");
-            System.out.println("\n  Juego del gatito");
-            System.out.println("   /gato <usuario - Invitar a jugar> ");
-            System.out.println("   /aceptar - Aceptar invitacion");
-            System.out.println("   /rechazar - Rechazar invitacion");
-            System.out.println("   /jugar <fila> <columna> - Hacer jugada (0-2)");
-            System.out.println("   /tablero - Ver tablero actual");
-            System.out.println("   /rendirse - Abandonar partida");
-            System.out.println("   /ayuda - Ver lista de comandos");
-            System.out.println("   salir - Cerrar conexion");
-            
-            System.out.println("---------------------------------------\n");
+
+            System.out.println("""
+                        -------- BIENVENIDO AL CHAT --------
+
+                        Tienes 3 mensajes gratis.
+
+                         Comandos:
+                           /registro <usuario> <password>
+                           /login <usuario> <password>
+                           /usuarios - Ver usuarios registrados
+                           /online - Ver quien esta conectado
+                           /desbloquear <usuario>
+                           /bloqueados
+
+                          Juego del gatito
+                           /gato <usuario - Invitar a jugar>
+                           /aceptar - Aceptar invitacion
+                           /rechazar - Rechazar invitacion
+                           /jugar <fila> <columna> - Hacer jugada (0-2)
+                           /tablero - Ver tablero actual
+                           /rendirse - Abandonar partida
+                           /ayuda - Ver lista de comandos
+                           salir - Cerrar conexion
+
+                        ---------------------------------------
+                        """);
 
             while (true) {
                 String mensaje = teclado.readLine();

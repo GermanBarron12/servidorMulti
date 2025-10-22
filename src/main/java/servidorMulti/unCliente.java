@@ -313,27 +313,32 @@ public class unCliente implements Runnable {
     }
 
     private void mostrarAyuda() throws IOException {
-        salida.writeUTF("\n-------- COMANDOS DISPONIBLES --------");
-        salida.writeUTF(" /registro <usuario> <password>");
-        salida.writeUTF(" /login <usuario> <password>");
-        salida.writeUTF(" mensaje - Enviar a todos");
-        salida.writeUTF(" @usuario mensaje - Privado");
-        salida.writeUTF(" /usuarios - Lista de usuarios registrados");
-        salida.writeUTF(" /online - Usuarios conectados");
-        salida.writeUTF(" /bloquear <usuario>");
-        salida.writeUTF(" /desbloquear <usuario>");
-        salida.writeUTF(" /bloqueados");
-        salida.writeUTF("\n  Juego del gatito");
-        salida.writeUTF(" /gato <usuario> - Invitar a jugar");
-        salida.writeUTF(" /aceptar - Aceptar invitacion");
-        salida.writeUTF(" /rechazar - Rechazar invitacion");
-        salida.writeUTF(" /jugar <fila> <columna> - Hacer jugada (0-2)");
-        salida.writeUTF(" /tablero - Ver tablero actual");
-        salida.writeUTF(" /rendirse - Abandonar partida");
-        salida.writeUTF(" /ayuda - Ver lista de comandos");
-        salida.writeUTF(" salir - Cerrar conexion");
-        salida.writeUTF("--------------------------------------\n");
-        salida.flush();
+                    String ayuda = """
+                     -------- COMANDOS DISPONIBLES --------
+                      /registro <usuario> <password>
+                      /login <usuario> <password>
+                      mensaje - Enviar a todos
+                      @usuario mensaje - Privado
+                      /usuarios - Lista de usuarios registrados
+                      /online - Usuarios conectados
+                      /bloquear <usuario>
+                      /desbloquear <usuario>
+                      /bloqueados
+
+                       Juego del gatito
+                      /gato <usuario> - Invitar a jugar
+                      /aceptar - Aceptar invitacion
+                      /rechazar - Rechazar invitacion
+                      /jugar <fila> <columna> - Hacer jugada (0-2)
+                      /tablero - Ver tablero actual
+                      /rendirse - Abandonar partida
+                      /ayuda - Ver lista de comandos
+                      salir - Cerrar conexion
+                     --------------------------------------
+                     """;
+
+                 salida.writeUTF(ayuda);
+                 salida.flush();
     }
 
     private void enviarMensajePrivado(String mensaje) throws IOException {
