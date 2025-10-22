@@ -160,7 +160,8 @@ public class unCliente implements Runnable {
             try {
                 entrada.close();
                 salida.close();
-            } catch (IOException ignored) {}
+            } catch (IOException ignored) {
+            }
         }
     }
 
@@ -313,7 +314,7 @@ public class unCliente implements Runnable {
     }
 
     private void mostrarAyuda() throws IOException {
-                    String ayuda = """
+        String ayuda = """
                      -------- COMANDOS DISPONIBLES --------
                       /registro <usuario> <password>
                       /login <usuario> <password>
@@ -337,8 +338,8 @@ public class unCliente implements Runnable {
                      --------------------------------------
                      """;
 
-                 salida.writeUTF(ayuda);
-                 salida.flush();
+        salida.writeUTF(ayuda);
+        salida.flush();
     }
 
     private void enviarMensajePrivado(String mensaje) throws IOException {
@@ -440,7 +441,7 @@ public class unCliente implements Runnable {
 
     private void procesarInvitacionGato(String mensaje) throws IOException {
         if (!autenticado) {
-            salida.writeUTF("Debes estar autenticado para poder jugar.");
+            salida.writeUTF("Debes estar autenticado para jugar");
             salida.flush();
             return;
         }
@@ -453,23 +454,12 @@ public class unCliente implements Runnable {
         }
 
         String invitado = partes[1];
-        if (DatabaseManager.usuarioExiste(invitado)) {
-            salida.writeUTF("❌ El usuario '" + invitado + "' no existe");
-            salida.flush();
-            return;
-        }
 
-        unCliente clienteInvitado = null;
-        for (unCliente c : ServidorMulti.clientes.values()) {
-            if (c.autenticado && c.nombreUsuario != null && c.nombreUsuario.equals(invitado)) {
-                clienteInvitado = c;
-                break;
-
-            }
-        }
+        // PRIMERO: Buscar si está conectado
+        unCliente clienteInvitado = buscarClientePorNombre(invitado);
 
         if (clienteInvitado == null) {
-            salida.writeUTF("❌ El usuario '" + invitado + "' no está conectado");
+            salida.writeUTF("El usuario '" + invitado + "' no esta conectado o no existe");
             salida.flush();
             return;
         }
@@ -478,12 +468,18 @@ public class unCliente implements Runnable {
 
         switch (resultado) {
             case 1:
-                salida.writeUTF("Invitacion enviada a " + invitado);
+                salida.writeUTF("Invitación enviada a " + invitado);
                 salida.flush();
 
-                // Notificar al invitado
-                clienteInvitado.salida.writeUTF("- " + nombreUsuario + " te invita a jugar al Gato");
-                clienteInvitado.salida.writeUTF("   Usa /aceptar o /rechazar");
+                String mensajeInvitacion = """
+        ------------------------------------
+              INVITACION AL JUEGO GATO        
+        ------------------------------------
+         %s te invita a jugar al Gato
+           Usa: /aceptar  o  /rechazar
+        """.formatted(nombreUsuario);
+
+                clienteInvitado.salida.writeUTF(mensajeInvitacion);
                 clienteInvitado.salida.flush();
                 break;
             case -1:
@@ -528,19 +524,27 @@ public class unCliente implements Runnable {
 
         String tablero = juego.getTableroVisual();
 
-        salida.writeUTF(" ¡Partida iniciada!");
-        salida.writeUTF(tablero);
-        salida.writeUTF(" Usa: /jugar <fila> <columna> (0-2)");
-        salida.writeUTF(" Usa: /tablero para ver el tablero");
-        salida.writeUTF(" Usa: /rendirse para abandonar");
+        String mensajeInicio = """
+    ¡Partida iniciada!
+    %s
+    Usa: /jugar <fila> <columna> (0-2)
+    Usa: /tablero para ver el tablero
+    Usa: /rendirse para abandonar
+    """.formatted(tablero);
+
+        salida.writeUTF(mensajeInicio);
         salida.flush();
 
         if (clienteOponente != null) {
-            clienteOponente.salida.writeUTF("- " + nombreUsuario + " acepto! Partida iniciada");
-            clienteOponente.salida.writeUTF(tablero);
-            clienteOponente.salida.writeUTF(" Usa: /jugar <fila> <columna> (0-2)");
-            clienteOponente.salida.writeUTF(" Usa: /tablero para ver el tablero");
-            clienteOponente.salida.writeUTF(" Usa: /rendirse para abandonar");
+            String mensajeOponente = """
+        - %s acepto! ¡Partida iniciada!
+        %s
+        Usa: /jugar <fila> <columna> (0-2)
+        Usa: /tablero para ver el tablero
+        Usa: /rendirse para abandonar
+        """.formatted(nombreUsuario, tablero);
+
+            clienteOponente.salida.writeUTF(mensajeOponente);
             clienteOponente.salida.flush();
         }
     }
@@ -705,7 +709,7 @@ public class unCliente implements Runnable {
 
         unCliente clienteOponente = buscarClientePorNombre(oponente);
         if (clienteOponente != null) {
-            clienteOponente.salida.writeUTF("- " + nombreUsuario + " se rindio. ¡Ganaste por abandono!");
+            clienteOponente.salida.writeUTF("- " + nombreUsuario + " se rindio. Ganaste por abandono!");
             clienteOponente.salida.flush();
         }
 

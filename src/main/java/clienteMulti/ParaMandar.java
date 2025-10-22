@@ -42,7 +42,7 @@ public class ParaMandar implements Runnable {
                            /bloqueados
 
                           Juego del gatito
-                           /gato <usuario - Invitar a jugar>
+                           /gato <usuario> - Invitar a jugar
                            /aceptar - Aceptar invitacion
                            /rechazar - Rechazar invitacion
                            /jugar <fila> <columna> - Hacer jugada (0-2)

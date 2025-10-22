@@ -54,7 +54,7 @@ public class GestorJuegos {
         }
         
         String invitador = invitacionesPendientes.remove(invitado);
-        System.out.println("[GATO] " + invitado + " rechazó invitación de " + invitador);
+        System.out.println("[GATO] " + invitado + " rechazo invitación de " + invitador);
         return true;
     }
     
