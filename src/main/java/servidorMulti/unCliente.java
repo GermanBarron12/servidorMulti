@@ -37,7 +37,7 @@ public class unCliente implements Runnable {
 
             salida.writeUTF("-------- BIENVENIDO AL CHAT --------");
             salida.writeUTF("Conectado al servidor. ID: #" + idCliente);
-            salida.writeUTF("Comandos: /ayuda para ver todos");
+            salida.writeUTF("Comandos: /ayuda para ver todos los comandos disponibles");
             salida.flush();
 
             while (true) {
@@ -146,7 +146,7 @@ public class unCliente implements Runnable {
                     unCliente clienteOponente = buscarClientePorNombre(nombreUsuario);
                     if (clienteOponente != null) {
                         try {
-                            clienteOponente.salida.writeUTF("- " + nombreUsuario + " se desconecto. !Ganaste por abandono!");
+                            clienteOponente.salida.writeUTF("- " + nombreUsuario + " se desconecto. Ganaste por abandono!");
                             clienteOponente.salida.flush();
                         } catch (IOException ignored) {
                         }
@@ -459,7 +459,24 @@ public class unCliente implements Runnable {
         unCliente clienteInvitado = buscarClientePorNombre(invitado);
 
         if (clienteInvitado == null) {
-            salida.writeUTF("El usuario '" + invitado + "' no esta conectado o no existe");
+            if (DatabaseManager.usuarioExiste(invitado)){
+                salida.writeUTF("El usuario "+ invitado +" no esta conectado en este momento");
+                } else {
+                    salida.writeUTF("El usuario '" + invitado + "' no existe");
+            }
+            salida.flush();
+            return;
+        }
+        
+        
+        if (DatabaseManager.estaBloquedo(nombreUsuario, invitado)){
+            salida.writeUTF("No puedes invitar a " + invitado + " porque lo tienes bloqueado");
+            salida.flush();
+            return;
+        }
+        
+        if (DatabaseManager.estaBloquedo(invitado, nombreUsuario)){
+            salida.writeUTF("No puedes invitar a " + invitado + " en este momento");
             salida.flush();
             return;
         }
