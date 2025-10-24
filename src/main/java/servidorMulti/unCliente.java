@@ -16,6 +16,7 @@ public class unCliente implements Runnable {
     private int mensajesEnviados = 0;
     private boolean autenticado = false;
     private String nombreUsuario = null;
+    private boolean enPartida = false;
 
     public boolean isAutenticado() {
         return autenticado;
@@ -143,13 +144,14 @@ public class unCliente implements Runnable {
                     String oponente = juego.getOponente(nombreUsuario);
                     juego.terminarPorAbandono(nombreUsuario);
 
-                    unCliente clienteOponente = buscarClientePorNombre(nombreUsuario);
+                    unCliente clienteOponente = buscarClientePorNombre(oponente);
                     if (clienteOponente != null) {
+                        clienteOponente.enPartida = false;
                         try {
                             clienteOponente.salida.writeUTF("- " + nombreUsuario + " se desconecto. Ganaste por abandono!");
+                            clienteOponente.salida.writeUTF("Ahora puedes volver a chatear normalmente");
                             clienteOponente.salida.flush();
-                        } catch (IOException ignored) {
-                        }
+                        } catch (IOException ignored) {}
                     }
                     GestorJuegos.terminarPartida(nombreUsuario);
                 }
@@ -160,8 +162,7 @@ public class unCliente implements Runnable {
             try {
                 entrada.close();
                 salida.close();
-            } catch (IOException ignored) {
-            }
+            } catch (IOException ignored) {}
         }
     }
 
@@ -360,6 +361,33 @@ public class unCliente implements Runnable {
             salida.flush();
             return;
         }
+        
+         if (this.enPartida && clienteDestino.enPartida) {
+        JuegoGato miPartida = GestorJuegos.obtenerPartida(nombreUsuario);
+        if (miPartida != null && miPartida.contieneJugador(aQuien)) {
+            // Estan jugando juntos, permitir chat
+            String remitente = autenticado ? nombreUsuario : "Cliente #" + idCliente;
+            clienteDestino.salida.writeUTF("[Privado de " + remitente + "]: " + contenido);
+            clienteDestino.salida.flush();
+            salida.writeUTF("[Mensaje privado enviado a " + aQuien + "]");
+            salida.flush();
+            return;
+        }
+    }
+         
+         if (this.enPartida) {
+        salida.writeUTF("No puedes enviar mensajes mientras estas en una partida");
+        salida.flush();
+        return;
+    }
+         
+          if (clienteDestino.enPartida) {
+        salida.writeUTF("No puedes enviar mensajes a " + aQuien + " porque esta en una partida");
+        salida.flush();
+        return;
+    }
+          
+          
 
         if (autenticado && DatabaseManager.estaBloquedo(clienteDestino.nombreUsuario, nombreUsuario)) {
             salida.writeUTF(" No puedes enviar mensajes a '" + aQuien + "'");
@@ -392,6 +420,14 @@ public class unCliente implements Runnable {
 
                 if (autenticado && cliente.autenticado
                         && DatabaseManager.estaBloquedo(nombreUsuario, cliente.nombreUsuario)) {
+                    continue;
+                }
+                
+                if (cliente.enPartida){
+                    continue;
+                }
+                
+                if (this.enPartida){
                     continue;
                 }
 
@@ -541,10 +577,16 @@ public class unCliente implements Runnable {
             salida.flush();
             return;
         }
+        
+        this.enPartida = true;
 
         // Notificar a ambos jugadores
         String oponente = juego.getOponente(nombreUsuario);
         unCliente clienteOponente = buscarClientePorNombre(oponente);
+        
+        if (clienteOponente != null){
+            clienteOponente.enPartida = true;
+        }
 
         String tablero = juego.getTableroVisual();
 
@@ -554,6 +596,7 @@ public class unCliente implements Runnable {
     Usa: /jugar <fila> <columna> (0-2)
     Usa: /tablero para ver el tablero
     Usa: /rendirse para abandonar
+    NOTA: No recibiras mensajes del chat mientras juegas                                                      
     """.formatted(tablero);
 
         salida.writeUTF(mensajeInicio);
@@ -566,6 +609,7 @@ public class unCliente implements Runnable {
         Usa: /jugar <fila> <columna> (0-2)
         Usa: /tablero para ver el tablero
         Usa: /rendirse para abandonar
+        NOTA: No recibiras mensajes del chat mientras juegas 
         """.formatted(nombreUsuario, tablero);
 
             clienteOponente.salida.writeUTF(mensajeOponente);
@@ -656,27 +700,38 @@ public class unCliente implements Runnable {
             // Si el juego terminó
             if (juego.isJuegoTerminado()) {
                 String ganador = juego.getGanador();
+                
+                this.enPartida = false;
+                if(clienteOponente != null){
+                    clienteOponente.enPartida = false;
+                }
 
                 if (ganador.equals("EMPATE")) {
                     salida.writeUTF("¡EMPATE! Bien jugado");
+                    salida.writeUTF("Ahora puedes volver a chatear normalmente");
                     salida.flush();
                     if (clienteOponente != null) {
                         clienteOponente.salida.writeUTF("¡EMPATE! Bien jugado");
+                        clienteOponente.salida.writeUTF("Ahora puedes volver a chatear normalmente");
                         clienteOponente.salida.flush();
                     }
                 } else {
                     if (ganador.equals(nombreUsuario)) {
                         salida.writeUTF("¡FELICIDADES! Ganaste la partida");
+                        salida.writeUTF("Ahora puedes volver a chatear normalmente");
                         salida.flush();
                         if (clienteOponente != null) {
                             clienteOponente.salida.writeUTF("Perdiste la partida");
+                            clienteOponente.salida.writeUTF("Ahora puedes volver a chatear normalmente");
                             clienteOponente.salida.flush();
                         }
                     } else {
                         salida.writeUTF("Perdiste la partida");
+                        salida.writeUTF("Ahora puedes volver a chatear normalmente");
                         salida.flush();
                         if (clienteOponente != null) {
                             clienteOponente.salida.writeUTF("¡FELICIDADES! Ganaste la partida");
+                            clienteOponente.salida.writeUTF("Ahora puedes volver a chatear normalmente");
                             clienteOponente.salida.flush();
                         }
                     }
@@ -729,11 +784,13 @@ public class unCliente implements Runnable {
         juego.terminarPorAbandono(nombreUsuario);
 
         salida.writeUTF("Te has rendido. " + oponente + " gana por abandono");
+        salida.writeUTF("Ahora puedes volver a chatear normalmente");
         salida.flush();
 
         unCliente clienteOponente = buscarClientePorNombre(oponente);
         if (clienteOponente != null) {
             clienteOponente.salida.writeUTF("- " + nombreUsuario + " se rindio. Ganaste por abandono!");
+            clienteOponente.salida.writeUTF("Ahora puedes volver a chatear normalmente");
             clienteOponente.salida.flush();
         }
 
