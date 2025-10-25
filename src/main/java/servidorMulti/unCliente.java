@@ -148,7 +148,7 @@ public class unCliente implements Runnable {
                     if (clienteOponente != null) {
                         clienteOponente.enPartida = false;
                         try {
-                            clienteOponente.salida.writeUTF("- " + nombreUsuario + " se desconecto. Ganaste por abandono!");
+                            clienteOponente.salida.writeUTF("- " + nombreUsuario + " se desconecto. Ganaste por abandono!, obtienes 2 puntos.");
                             clienteOponente.salida.writeUTF("Ahora puedes volver a chatear normalmente");
                             clienteOponente.salida.flush();
                         } catch (IOException ignored) {}
@@ -705,32 +705,34 @@ public class unCliente implements Runnable {
                 if(clienteOponente != null){
                     clienteOponente.enPartida = false;
                 }
+                
+                DatabaseManager.registrarResultado(juego.getGanador(), juego.getJugador2(), ganador);
 
                 if (ganador.equals("EMPATE")) {
-                    salida.writeUTF("¡EMPATE! Bien jugado");
+                    salida.writeUTF("¡EMPATE! Bien jugado, obtienes 1 punto.");
                     salida.writeUTF("Ahora puedes volver a chatear normalmente");
                     salida.flush();
                     if (clienteOponente != null) {
-                        clienteOponente.salida.writeUTF("¡EMPATE! Bien jugado");
+                        clienteOponente.salida.writeUTF("¡EMPATE! Bien jugado, obtienes 1 punto.");
                         clienteOponente.salida.writeUTF("Ahora puedes volver a chatear normalmente");
                         clienteOponente.salida.flush();
                     }
                 } else {
                     if (ganador.equals(nombreUsuario)) {
-                        salida.writeUTF("¡FELICIDADES! Ganaste la partida");
+                        salida.writeUTF("¡FELICIDADES! Ganaste la partida, obtienes 2 puntos.");
                         salida.writeUTF("Ahora puedes volver a chatear normalmente");
                         salida.flush();
                         if (clienteOponente != null) {
-                            clienteOponente.salida.writeUTF("Perdiste la partida");
+                            clienteOponente.salida.writeUTF("Perdiste la partida, obtienes 0 puntos.");
                             clienteOponente.salida.writeUTF("Ahora puedes volver a chatear normalmente");
                             clienteOponente.salida.flush();
                         }
                     } else {
-                        salida.writeUTF("Perdiste la partida");
+                        salida.writeUTF("Perdiste la partida, obtienes 0 puntos.");
                         salida.writeUTF("Ahora puedes volver a chatear normalmente");
                         salida.flush();
                         if (clienteOponente != null) {
-                            clienteOponente.salida.writeUTF("¡FELICIDADES! Ganaste la partida");
+                            clienteOponente.salida.writeUTF("¡FELICIDADES! Ganaste la partida, obtienes 2 puntos.");
                             clienteOponente.salida.writeUTF("Ahora puedes volver a chatear normalmente");
                             clienteOponente.salida.flush();
                         }
@@ -783,13 +785,13 @@ public class unCliente implements Runnable {
         String oponente = juego.getOponente(nombreUsuario);
         juego.terminarPorAbandono(nombreUsuario);
 
-        salida.writeUTF("Te has rendido. " + oponente + " gana por abandono");
+        salida.writeUTF("Te has rendido. " + oponente + " gana por abandono, obtienes 0 puntos.");
         salida.writeUTF("Ahora puedes volver a chatear normalmente");
         salida.flush();
 
         unCliente clienteOponente = buscarClientePorNombre(oponente);
         if (clienteOponente != null) {
-            clienteOponente.salida.writeUTF("- " + nombreUsuario + " se rindio. Ganaste por abandono!");
+            clienteOponente.salida.writeUTF("- " + nombreUsuario + " se rindio. Ganaste por abandono!, obtienes 2 puntos.");
             clienteOponente.salida.writeUTF("Ahora puedes volver a chatear normalmente");
             clienteOponente.salida.flush();
         }
