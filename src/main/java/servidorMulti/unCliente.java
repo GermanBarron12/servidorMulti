@@ -84,12 +84,12 @@ public class unCliente implements Runnable {
                     continue;
                 }
 
-                if (mensaje.startsWith("/aceptar")) {
+                if (mensaje.equals("/aceptar")) {
                     procesarAceptarGato();
                     continue;
                 }
 
-                if (mensaje.startsWith("/rechazar")) {
+                if (mensaje.equals("/rechazar")) {
                     procesarRechazarGato();
                     continue;
                 }
@@ -99,12 +99,12 @@ public class unCliente implements Runnable {
                     continue;
                 }
 
-                if (mensaje.startsWith("/tablero")) {
+                if (mensaje.equals("/tablero")) {
                     mostrarTableroGato();
                     continue;
                 }
 
-                if (mensaje.startsWith("/rendirse")) {
+                if (mensaje.equals("/rendirse")) {
                     procesarRendirse();
                     continue;
                 }
@@ -114,7 +114,7 @@ public class unCliente implements Runnable {
                     continue;
                 }
                 
-                if (mensaje.equals("/estadisticas")){
+                if (mensaje.startsWith("/estadisticas")){
                     procesarEstadisticas(mensaje);
                     continue;
                 }
