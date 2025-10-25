@@ -114,8 +114,8 @@ public class unCliente implements Runnable {
                     continue;
                 }
                 
-                if (mensaje.startsWith("/estadisticas")){
-                    procesarEstadisticas(mensaje);
+                if (mensaje.startsWith("/stats")){
+                    procesarStats(mensaje);
                     continue;
                 }
 
@@ -347,7 +347,7 @@ public class unCliente implements Runnable {
                        
                        Estadisticas
                       /ranking - Ver ranking general
-                      /estadisticas - <usuario1> <usuario2> - Comparar jugadores
+                      /stats - <usuario1> <usuario2> - Comparar jugadores
                       /ayuda - Ver lista de comandos
                       salir - Cerrar conexion
                      --------------------------------------
@@ -832,7 +832,7 @@ public class unCliente implements Runnable {
     salida.writeUTF(ranking);
     salida.flush();
 }
-    private void procesarEstadisticas(String mensaje) throws IOException {
+    private void procesarStats(String mensaje) throws IOException {
     if (!autenticado) {
         salida.writeUTF("Debes estar autenticado para ver estadisticas");
         salida.flush();
@@ -841,7 +841,7 @@ public class unCliente implements Runnable {
     
     String[] partes = mensaje.split(" ");
     if (partes.length != 3) {
-        salida.writeUTF("Usa: /estadisticas <usuario1> <usuario2>");
+        salida.writeUTF("Usa: /stats <usuario1> <usuario2>");
         salida.flush();
         return;
     }

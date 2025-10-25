@@ -48,9 +48,12 @@ public class ParaMandar implements Runnable {
                            /jugar <fila> <columna> - Hacer jugada (0-2)
                            /tablero - Ver tablero actual
                            /rendirse - Abandonar partida
+
+                          Estadisticas:
+                           /ranking - Ver ranking general
+                           /stats - <usuario1> <usuario2> - Comparar jugadores
                            /ayuda - Ver lista de comandos
                            salir - Cerrar conexion
-
                         ---------------------------------------
                         """);
 
@@ -67,7 +70,7 @@ public class ParaMandar implements Runnable {
                         || mensaje.startsWith("/gato ") || mensaje.equals("/aceptar")
                         || mensaje.equals("/rechazar") || mensaje.startsWith("/jugar")
                         || mensaje.equals("/tablero") || mensaje.equals("/rendirse")
-                        || mensaje.equals("/ranking") || mensaje.startsWith("/estadisticas")){
+                        || mensaje.equals("/ranking") || mensaje.startsWith("/stats")){
                     salida.writeUTF(mensaje);
                     salida.flush();
                     continue;
