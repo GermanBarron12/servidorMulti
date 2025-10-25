@@ -113,6 +113,11 @@ public class unCliente implements Runnable {
                     procesarRanking();
                     continue;
                 }
+                
+                if (mensaje.equals("/estadisticas")){
+                    procesarEstadisticas(mensaje);
+                    continue;
+                }
 
                 if (mensaje.equals("/ayuda")) {
                     mostrarAyuda();
@@ -825,6 +830,27 @@ public class unCliente implements Runnable {
     
     String ranking = DatabaseManager.obtenerRanking(10);
     salida.writeUTF(ranking);
+    salida.flush();
+}
+    private void procesarEstadisticas(String mensaje) throws IOException {
+    if (!autenticado) {
+        salida.writeUTF("Debes estar autenticado para ver estadisticas");
+        salida.flush();
+        return;
+    }
+    
+    String[] partes = mensaje.split(" ");
+    if (partes.length != 3) {
+        salida.writeUTF("Usa: /estadisticas <usuario1> <usuario2>");
+        salida.flush();
+        return;
+    }
+    
+    String jugador1 = partes[1];
+    String jugador2 = partes[2];
+    
+    String estadisticas = DatabaseManager.obtenerEstadisticasEntre(jugador1, jugador2);
+    salida.writeUTF(estadisticas);
     salida.flush();
 }
     
