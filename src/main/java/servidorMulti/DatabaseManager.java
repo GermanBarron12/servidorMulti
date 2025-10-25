@@ -7,7 +7,8 @@ public class DatabaseManager {
     private static final String DB_URL = "jdbc:sqlite:chat_usuarios.db";
 
     public static void inicializarBaseDatos() {
-        try (Connection conn = DriverManager.getConnection(DB_URL); Statement stmt = conn.createStatement()) {
+        try (Connection conn = DriverManager.getConnection(DB_URL); 
+                Statement stmt = conn.createStatement()) {
 
             String sqlUsuarios = "CREATE TABLE IF NOT EXISTS usuarios ("
                     + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -25,6 +26,29 @@ public class DatabaseManager {
                     + "UNIQUE(usuario_bloqueador, usuario_bloqueado)"
                     + ")";
             stmt.execute(sqlBloqueos);
+            
+            String sqlEstadisticas = "CREATE TABLE IF NOT EXISTS estadisticas_gato (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "usuario TEXT NOT NULL," +
+                "victorias INTEGER DEFAULT 0," +
+                "empates INTEGER DEFAULT 0," +
+                "derrotas INTEGER DEFAULT 0," +
+                "puntos INTEGER DEFAULT 0," +
+                "FOREIGN KEY(usuario) REFERENCES usuarios(usuario)," +
+                "UNIQUE(usuario)" +
+                ")";
+        stmt.execute(sqlEstadisticas);
+        
+        String sqlHistorial = "CREATE TABLE IF NOT EXISTS historial_gato (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "jugador1 TEXT NOT NULL," +
+                "jugador2 TEXT NOT NULL," +
+                "ganador TEXT," +
+                "fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                "FOREIGN KEY(jugador1) REFERENCES usuarios(usuario)," +
+                "FOREIGN KEY(jugador2) REFERENCES usuarios(usuario)" +
+                ")";
+        stmt.execute(sqlHistorial);
 
             System.out.println(" [DB] Base de datos inicializada");
 
