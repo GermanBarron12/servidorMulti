@@ -108,6 +108,11 @@ public class unCliente implements Runnable {
                     procesarRendirse();
                     continue;
                 }
+                
+                if (mensaje.equals("/ranking")){
+                    procesarRanking();
+                    continue;
+                }
 
                 if (mensaje.equals("/ayuda")) {
                     mostrarAyuda();
@@ -334,6 +339,10 @@ public class unCliente implements Runnable {
                       /jugar <fila> <columna> - Hacer jugada (0-2)
                       /tablero - Ver tablero actual
                       /rendirse - Abandonar partida
+                       
+                       Estadisticas
+                      /ranking - Ver ranking general
+                      /estadisticas - <usuario1> <usuario2> - Comparar jugadores
                       /ayuda - Ver lista de comandos
                       salir - Cerrar conexion
                      --------------------------------------
@@ -807,4 +816,16 @@ public class unCliente implements Runnable {
         }
         return null;
     }
+    private void procesarRanking() throws IOException {
+    if (!autenticado) {
+        salida.writeUTF("Debes estar autenticado para ver el ranking");
+        salida.flush();
+        return;
+    }
+    
+    String ranking = DatabaseManager.obtenerRanking(10);
+    salida.writeUTF(ranking);
+    salida.flush();
+}
+    
 }

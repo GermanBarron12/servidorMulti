@@ -66,7 +66,8 @@ public class ParaMandar implements Runnable {
                         || mensaje.equals("/usuarios") || mensaje.equals("/online")
                         || mensaje.startsWith("/gato ") || mensaje.equals("/aceptar")
                         || mensaje.equals("/rechazar") || mensaje.startsWith("/jugar")
-                        || mensaje.equals("/tablero") || mensaje.equals("/rendirse")) {
+                        || mensaje.equals("/tablero") || mensaje.equals("/rendirse")
+                        || mensaje.equals("/ranking") || mensaje.startsWith("/estadisticas")){
                     salida.writeUTF(mensaje);
                     salida.flush();
                     continue;
