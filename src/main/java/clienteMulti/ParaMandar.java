@@ -40,6 +40,13 @@ public class ParaMandar implements Runnable {
                            /online - Ver quien esta conectado
                            /desbloquear <usuario>
                            /bloqueados
+                               
+                          Grupos:
+                          /creargrupo <nombre>
+                          /unirgrupo <nombre>
+                          /entrargrupo <nombre>
+                          /grupos - Ver todos los grupos
+                          /misgrupos - Ver mis grupos
 
                           Juego del gatito
                            /gato <usuario> - Invitar a jugar
@@ -70,7 +77,11 @@ public class ParaMandar implements Runnable {
                         || mensaje.startsWith("/gato ") || mensaje.equals("/aceptar")
                         || mensaje.equals("/rechazar") || mensaje.startsWith("/jugar")
                         || mensaje.equals("/tablero") || mensaje.equals("/rendirse")
-                        || mensaje.equals("/ranking") || mensaje.startsWith("/stats")){
+                        || mensaje.equals("/ranking") || mensaje.startsWith("/stats")
+                        || mensaje.startsWith("/creargrupo") || mensaje.startsWith("/unirgrupo")
+                        || mensaje.startsWith("/entrargrupo") || mensaje.startsWith("/eliminargrupo")
+                        || mensaje.equals("/grupos") || mensaje.equals("/misgrupos")
+                        || mensaje.startsWith("/miembros")){
                     salida.writeUTF(mensaje);
                     salida.flush();
                     continue;
