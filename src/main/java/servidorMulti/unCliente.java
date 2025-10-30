@@ -6,6 +6,11 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.util.List;
+import servidorMulti.grupos.GestorGrupos;
+import servidorMulti.grupos.GrupoDAO;
+import servidorMulti.grupos.MensajeDAO;
+import servidorMulti.grupos.MensajeGrupo;
 
 public class unCliente implements Runnable {
 
@@ -17,6 +22,7 @@ public class unCliente implements Runnable {
     private boolean autenticado = false;
     private String nombreUsuario = null;
     private boolean enPartida = false;
+    private String grupoActual = "Todos";
 
     public boolean isAutenticado() {
         return autenticado;
@@ -108,14 +114,49 @@ public class unCliente implements Runnable {
                     procesarRendirse();
                     continue;
                 }
-                
-                if (mensaje.equals("/ranking")){
+
+                if (mensaje.equals("/ranking")) {
                     procesarRanking();
                     continue;
                 }
-                
-                if (mensaje.startsWith("/stats")){
+
+                if (mensaje.startsWith("/stats")) {
                     procesarStats(mensaje);
+                    continue;
+                }
+
+                if (mensaje.startsWith("/creargrupo ")) {
+                    procesarCrearGrupo(mensaje);
+                    continue;
+                }
+
+                if (mensaje.startsWith("/unirgrupo")) {
+                    procesarUnirGrupo(mensaje);
+                    continue;
+                }
+
+                if (mensaje.startsWith("/entrargrupo")) {
+                    procesarEntrarGrupo(mensaje);
+                    continue;
+                }
+
+                if (mensaje.startsWith("/eliminargrupo")) {
+                    procesarEliminarGrupo(mensaje);
+                    continue;
+                }
+
+                if (mensaje.equals("/grupos")) {
+                    procesarListarGrupos();
+                    continue;
+                }
+
+                if (mensaje.equals("/misgrupos")) {
+                    procesarMisGrupos();
+                    continue;
+                }
+
+                if (mensaje.startsWith("/miembros")) {
+                    procesarMiembros(mensaje);
                     continue;
                 }
 
@@ -161,7 +202,8 @@ public class unCliente implements Runnable {
                             clienteOponente.salida.writeUTF("- " + nombreUsuario + " se desconecto. Ganaste por abandono!, obtienes 2 puntos.");
                             clienteOponente.salida.writeUTF("Ahora puedes volver a chatear normalmente");
                             clienteOponente.salida.flush();
-                        } catch (IOException ignored) {}
+                        } catch (IOException ignored) {
+                        }
                     }
                     GestorJuegos.terminarPartida(nombreUsuario);
                 }
@@ -172,7 +214,8 @@ public class unCliente implements Runnable {
             try {
                 entrada.close();
                 salida.close();
-            } catch (IOException ignored) {}
+            } catch (IOException ignored) {
+            }
         }
     }
 
@@ -210,6 +253,8 @@ public class unCliente implements Runnable {
         } else {
             salida.writeUTF("El usuario '" + usuario + "' ya existe.");
             salida.flush();
+            GrupoDAO.unirseGrupo(usuario, "Todos");
+            grupoActual = "Todos";
         }
     }
 
@@ -327,12 +372,28 @@ public class unCliente implements Runnable {
     private void mostrarAyuda() throws IOException {
         String ayuda = """
                      -------- COMANDOS DISPONIBLES --------
+                       Autenticacion:
                       /registro <usuario> <password>
                       /login <usuario> <password>
+                       
+                       Mensajeria:
                       mensaje - Enviar a todos
                       @usuario mensaje - Privado
+                       
+                       Grupos:
+                      /creargrupo <nombre> - Crear nuevo grupo
+                      /unirgrupo <nombre> - Unirse a grupo
+                      /entrargrupo <nombre> - Entrar a grupo
+                      /eliminargrupo <nombre> - Eliminar grupo
+                      /grupos - Lista de grupos
+                      /misgrupos - Mis grupos
+                      /miembros [grupo] - Miembros del grupo
+                       
+                       Informacion:
                       /usuarios - Lista de usuarios registrados
                       /online - Usuarios conectados
+                       
+                       Bloqueos:
                       /bloquear <usuario>
                       /desbloquear <usuario>
                       /bloqueados
@@ -348,6 +409,7 @@ public class unCliente implements Runnable {
                        Estadisticas
                       /ranking - Ver ranking general
                       /stats - <usuario1> <usuario2> - Comparar jugadores
+                       
                       /ayuda - Ver lista de comandos
                       salir - Cerrar conexion
                      --------------------------------------
@@ -375,33 +437,31 @@ public class unCliente implements Runnable {
             salida.flush();
             return;
         }
-        
-         if (this.enPartida && clienteDestino.enPartida) {
-        JuegoGato miPartida = GestorJuegos.obtenerPartida(nombreUsuario);
-        if (miPartida != null && miPartida.contieneJugador(aQuien)) {
-            // Estan jugando juntos, permitir chat
-            String remitente = autenticado ? nombreUsuario : "Cliente #" + idCliente;
-            clienteDestino.salida.writeUTF("[Privado de " + remitente + "]: " + contenido);
-            clienteDestino.salida.flush();
-            salida.writeUTF("[Mensaje privado enviado a " + aQuien + "]");
+
+        if (this.enPartida && clienteDestino.enPartida) {
+            JuegoGato miPartida = GestorJuegos.obtenerPartida(nombreUsuario);
+            if (miPartida != null && miPartida.contieneJugador(aQuien)) {
+                // Estan jugando juntos, permitir chat
+                String remitente = autenticado ? nombreUsuario : "Cliente #" + idCliente;
+                clienteDestino.salida.writeUTF("[Privado de " + remitente + "]: " + contenido);
+                clienteDestino.salida.flush();
+                salida.writeUTF("[Mensaje privado enviado a " + aQuien + "]");
+                salida.flush();
+                return;
+            }
+        }
+
+        if (this.enPartida) {
+            salida.writeUTF("No puedes enviar mensajes mientras estas en una partida");
             salida.flush();
             return;
         }
-    }
-         
-         if (this.enPartida) {
-        salida.writeUTF("No puedes enviar mensajes mientras estas en una partida");
-        salida.flush();
-        return;
-    }
-         
-          if (clienteDestino.enPartida) {
-        salida.writeUTF("No puedes enviar mensajes a " + aQuien + " porque esta en una partida");
-        salida.flush();
-        return;
-    }
-          
-          
+
+        if (clienteDestino.enPartida) {
+            salida.writeUTF("No puedes enviar mensajes a " + aQuien + " porque esta en una partida");
+            salida.flush();
+            return;
+        }
 
         if (autenticado && DatabaseManager.estaBloquedo(clienteDestino.nombreUsuario, nombreUsuario)) {
             salida.writeUTF(" No puedes enviar mensajes a '" + aQuien + "'");
@@ -423,32 +483,72 @@ public class unCliente implements Runnable {
     }
 
     private void enviarBroadcast(String mensaje) throws IOException {
-        String remitente = autenticado ? nombreUsuario : "Cliente #" + idCliente;
+        if (!autenticado) {
+            enviarBroadcastAnonimo(mensaje);
+            return;
+        }
+
+        enviarBroadcastAutenticado(mensaje);
+    }
+
+    private void enviarBroadcastAnonimo(String mensaje) throws IOException {
+        String remitente = "Cliente #" + idCliente;
 
         for (unCliente cliente : ServidorMulti.clientes.values()) {
-            if (!cliente.idCliente.equals(this.idCliente)) {
-                if (autenticado && cliente.autenticado
-                        && DatabaseManager.estaBloquedo(cliente.nombreUsuario, nombreUsuario)) {
-                    continue;
-                }
-
-                if (autenticado && cliente.autenticado
-                        && DatabaseManager.estaBloquedo(nombreUsuario, cliente.nombreUsuario)) {
-                    continue;
-                }
-                
-                if (cliente.enPartida){
-                    continue;
-                }
-                
-                if (this.enPartida){
-                    continue;
-                }
-
-                cliente.salida.writeUTF(" [" + remitente + "]: " + mensaje);
+            if (debeRecibirMensaje(cliente)) {
+                cliente.salida.writeUTF("[" + remitente + "]: " + mensaje);
                 cliente.salida.flush();
             }
         }
+    }
+
+    private void enviarBroadcastAutenticado(String mensaje) throws IOException {
+        guardarMensajeEnGrupo(mensaje);
+        distribuirMensajeEnGrupo(mensaje);
+    }
+
+    private void guardarMensajeEnGrupo(String mensaje) {
+        MensajeDAO.enviarMensaje(nombreUsuario, grupoActual, mensaje);
+    }
+
+    private void distribuirMensajeEnGrupo(String mensaje) throws IOException {
+        for (unCliente cliente : ServidorMulti.clientes.values()) {
+            if (debeRecibirMensajeGrupo(cliente)) {
+                cliente.salida.writeUTF("[" + nombreUsuario + "]: " + mensaje);
+                cliente.salida.flush();
+            }
+        }
+    }
+
+    private boolean debeRecibirMensaje(unCliente cliente) {
+        return !cliente.idCliente.equals(this.idCliente)
+                && !cliente.enPartida
+                && !this.enPartida;
+    }
+
+    private boolean debeRecibirMensajeGrupo(unCliente cliente) {
+        if (cliente.idCliente.equals(this.idCliente)) {
+            return false;
+        }
+
+        if (cliente.enPartida || this.enPartida) {
+            return false;
+        }
+
+        if (!cliente.autenticado) {
+            return grupoActual.equals("Todos");
+        }
+
+        if (!cliente.grupoActual.equals(this.grupoActual)) {
+            return false;
+        }
+
+        return !hayBloqueoMutuo(cliente);
+    }
+
+    private boolean hayBloqueoMutuo(unCliente cliente) {
+        return DatabaseManager.estaBloquedo(cliente.nombreUsuario, nombreUsuario)
+                || DatabaseManager.estaBloquedo(nombreUsuario, cliente.nombreUsuario);
     }
 
     private void procesarListaUsuarios() throws IOException {
@@ -509,23 +609,22 @@ public class unCliente implements Runnable {
         unCliente clienteInvitado = buscarClientePorNombre(invitado);
 
         if (clienteInvitado == null) {
-            if (DatabaseManager.usuarioExiste(invitado)){
-                salida.writeUTF("El usuario "+ invitado +" no esta conectado en este momento");
-                } else {
-                    salida.writeUTF("El usuario '" + invitado + "' no existe");
+            if (DatabaseManager.usuarioExiste(invitado)) {
+                salida.writeUTF("El usuario " + invitado + " no esta conectado en este momento");
+            } else {
+                salida.writeUTF("El usuario '" + invitado + "' no existe");
             }
             salida.flush();
             return;
         }
-        
-        
-        if (DatabaseManager.estaBloquedo(nombreUsuario, invitado)){
+
+        if (DatabaseManager.estaBloquedo(nombreUsuario, invitado)) {
             salida.writeUTF("No puedes invitar a " + invitado + " porque lo tienes bloqueado");
             salida.flush();
             return;
         }
-        
-        if (DatabaseManager.estaBloquedo(invitado, nombreUsuario)){
+
+        if (DatabaseManager.estaBloquedo(invitado, nombreUsuario)) {
             salida.writeUTF("No puedes invitar a " + invitado + " en este momento");
             salida.flush();
             return;
@@ -591,14 +690,14 @@ public class unCliente implements Runnable {
             salida.flush();
             return;
         }
-        
+
         this.enPartida = true;
 
         // Notificar a ambos jugadores
         String oponente = juego.getOponente(nombreUsuario);
         unCliente clienteOponente = buscarClientePorNombre(oponente);
-        
-        if (clienteOponente != null){
+
+        if (clienteOponente != null) {
             clienteOponente.enPartida = true;
         }
 
@@ -714,12 +813,12 @@ public class unCliente implements Runnable {
             // Si el juego terminó
             if (juego.isJuegoTerminado()) {
                 String ganador = juego.getGanador();
-                
+
                 this.enPartida = false;
-                if(clienteOponente != null){
+                if (clienteOponente != null) {
                     clienteOponente.enPartida = false;
                 }
-                
+
                 DatabaseManager.registrarResultado(juego.getGanador(), juego.getJugador2(), ganador);
 
                 if (ganador.equals("EMPATE")) {
@@ -821,37 +920,240 @@ public class unCliente implements Runnable {
         }
         return null;
     }
+
     private void procesarRanking() throws IOException {
-    if (!autenticado) {
-        salida.writeUTF("Debes estar autenticado para ver el ranking");
+        if (!autenticado) {
+            salida.writeUTF("Debes estar autenticado para ver el ranking");
+            salida.flush();
+            return;
+        }
+
+        String ranking = DatabaseManager.obtenerRanking(10);
+        salida.writeUTF(ranking);
         salida.flush();
-        return;
     }
-    
-    String ranking = DatabaseManager.obtenerRanking(10);
-    salida.writeUTF(ranking);
-    salida.flush();
-}
+
     private void procesarStats(String mensaje) throws IOException {
-    if (!autenticado) {
-        salida.writeUTF("Debes estar autenticado para ver estadisticas");
+        if (!autenticado) {
+            salida.writeUTF("Debes estar autenticado para ver estadisticas");
+            salida.flush();
+            return;
+        }
+
+        String[] partes = mensaje.split(" ");
+        if (partes.length != 3) {
+            salida.writeUTF("Usa: /stats <usuario1> <usuario2>");
+            salida.flush();
+            return;
+        }
+
+        String jugador1 = partes[1];
+        String jugador2 = partes[2];
+
+        String estadisticas = DatabaseManager.obtenerEstadisticasEntre(jugador1, jugador2);
+        salida.writeUTF(estadisticas);
         salida.flush();
-        return;
     }
-    
-    String[] partes = mensaje.split(" ");
-    if (partes.length != 3) {
-        salida.writeUTF("Usa: /stats <usuario1> <usuario2>");
+
+    // ============== METODOS DE GRUPOS ==============
+    private void procesarCrearGrupo(String mensaje) throws IOException {
+        if (!validarAutenticacionGrupo()) {
+            return;
+        }
+
+        String nombreGrupo = extraerNombreGrupo(mensaje);
+        if (nombreGrupo == null) {
+            salida.writeUTF("Usa: /creargrupo <nombre>");
+            salida.flush();
+            return;
+        }
+
+        ejecutarCreacionGrupo(nombreGrupo);
+    }
+
+    private boolean validarAutenticacionGrupo() throws IOException {
+        if (!autenticado) {
+            salida.writeUTF("Debes estar autenticado para usar grupos");
+            salida.flush();
+            return false;
+        }
+        return true;
+    }
+
+    private String extraerNombreGrupo(String mensaje) {
+        String[] partes = mensaje.split(" ", 2);
+        return partes.length == 2 ? partes[1].trim() : null;
+    }
+
+    private void ejecutarCreacionGrupo(String nombreGrupo) throws IOException {
+        int resultado = GrupoDAO.crearGrupo(nombreGrupo, nombreUsuario);
+
+        if (resultado == 1) {
+            GrupoDAO.unirseGrupo(nombreUsuario, nombreGrupo);
+            salida.writeUTF("Grupo '" + nombreGrupo + "' creado exitosamente");
+            salida.writeUTF("Te has unido automaticamente al grupo");
+        } else if (resultado == -1) {
+            salida.writeUTF("El grupo '" + nombreGrupo + "' ya existe");
+        } else {
+            salida.writeUTF("Error al crear el grupo");
+        }
         salida.flush();
-        return;
     }
-    
-    String jugador1 = partes[1];
-    String jugador2 = partes[2];
-    
-    String estadisticas = DatabaseManager.obtenerEstadisticasEntre(jugador1, jugador2);
-    salida.writeUTF(estadisticas);
-    salida.flush();
-}
-    
+
+    private void procesarUnirGrupo(String mensaje) throws IOException {
+        if (!validarAutenticacionGrupo()) {
+            return;
+        }
+
+        String nombreGrupo = extraerNombreGrupo(mensaje);
+        if (nombreGrupo == null) {
+            salida.writeUTF("Usa: /unirgrupo <nombre>");
+            salida.flush();
+            return;
+        }
+
+        ejecutarUnionGrupo(nombreGrupo);
+    }
+
+    private void ejecutarUnionGrupo(String nombreGrupo) throws IOException {
+        int resultado = GrupoDAO.unirseGrupo(nombreUsuario, nombreGrupo);
+
+        if (resultado == 1) {
+            salida.writeUTF("Te has unido al grupo '" + nombreGrupo + "'");
+            salida.writeUTF("Usa /entrargrupo " + nombreGrupo + " para ver mensajes");
+        } else if (resultado == -1) {
+            salida.writeUTF("El grupo '" + nombreGrupo + "' no existe");
+        } else if (resultado == -2) {
+            salida.writeUTF("Ya eres miembro del grupo '" + nombreGrupo + "'");
+        } else {
+            salida.writeUTF("Error al unirse al grupo");
+        }
+        salida.flush();
+    }
+
+    private void procesarEntrarGrupo(String mensaje) throws IOException {
+        if (!validarAutenticacionGrupo()) {
+            return;
+        }
+
+        String nombreGrupo = extraerNombreGrupo(mensaje);
+        if (nombreGrupo == null) {
+            salida.writeUTF("Usa: /entrargrupo <nombre>");
+            salida.flush();
+            return;
+        }
+
+        ejecutarEntradaGrupo(nombreGrupo);
+    }
+
+    private void ejecutarEntradaGrupo(String nombreGrupo) throws IOException {
+        if (!GrupoDAO.esMiembro(nombreUsuario, nombreGrupo)) {
+            salida.writeUTF("No eres miembro del grupo '" + nombreGrupo + "'");
+            salida.writeUTF("Usa /unirgrupo " + nombreGrupo + " para unirte");
+            salida.flush();
+            return;
+        }
+
+        cambiarAGrupo(nombreGrupo);
+    }
+
+    private void cambiarAGrupo(String nombreGrupo) throws IOException {
+        grupoActual = nombreGrupo;
+        GestorGrupos.cambiarGrupo(nombreUsuario, nombreGrupo);
+
+        salida.writeUTF("Ahora estas en el grupo: " + nombreGrupo);
+
+        mostrarMensajesNoLeidos();
+
+        salida.writeUTF("Escribe mensajes normalmente para este grupo");
+        salida.flush();
+    }
+
+    private void mostrarMensajesNoLeidos() throws IOException {
+        List<MensajeGrupo> mensajes = MensajeDAO.obtenerMensajesNoLeidos(nombreUsuario, grupoActual);
+
+        if (!mensajes.isEmpty()) {
+            salida.writeUTF("\n--- Mensajes no leidos ---");
+
+            for (MensajeGrupo msg : mensajes) {
+                salida.writeUTF(msg.formatear());
+                MensajeDAO.marcarComoLeido(msg.getId(), nombreUsuario);
+            }
+
+            salida.writeUTF("--- Fin de mensajes ---\n");
+        }
+        salida.flush();
+    }
+
+    private void procesarEliminarGrupo(String mensaje) throws IOException {
+        if (!validarAutenticacionGrupo()) {
+            return;
+        }
+
+        String nombreGrupo = extraerNombreGrupo(mensaje);
+        if (nombreGrupo == null) {
+            salida.writeUTF("Usa: /eliminargrupo <nombre>");
+            salida.flush();
+            return;
+        }
+
+        ejecutarEliminacionGrupo(nombreGrupo);
+    }
+
+    private void ejecutarEliminacionGrupo(String nombreGrupo) throws IOException {
+        int resultado = GrupoDAO.eliminarGrupo(nombreGrupo, nombreUsuario);
+
+        if (resultado == 1) {
+            if (grupoActual.equals(nombreGrupo)) {
+                grupoActual = "Todos";
+            }
+            salida.writeUTF("Grupo '" + nombreGrupo + "' eliminado");
+        } else if (resultado == -1) {
+            salida.writeUTF("El grupo '" + nombreGrupo + "' no existe");
+        } else if (resultado == -2) {
+            salida.writeUTF("No puedes eliminar el grupo 'Todos'");
+        } else if (resultado == -3) {
+            salida.writeUTF("Solo el creador puede eliminar el grupo");
+        } else {
+            salida.writeUTF("Error al eliminar el grupo");
+        }
+        salida.flush();
+    }
+
+    private void procesarListarGrupos() throws IOException {
+        if (!validarAutenticacionGrupo()) {
+            return;
+        }
+
+        String lista = GestorGrupos.formatearListaGrupos();
+        salida.writeUTF(lista);
+        salida.flush();
+    }
+
+    private void procesarMisGrupos() throws IOException {
+        if (!validarAutenticacionGrupo()) {
+            return;
+        }
+
+        String lista = GestorGrupos.formatearMisGrupos(nombreUsuario);
+        salida.writeUTF(lista);
+        salida.writeUTF("Grupo actual: " + grupoActual);
+        salida.flush();
+    }
+
+    private void procesarMiembros(String mensaje) throws IOException {
+        if (!validarAutenticacionGrupo()) {
+            return;
+        }
+
+        String nombreGrupo = extraerNombreGrupo(mensaje);
+        if (nombreGrupo == null) {
+            nombreGrupo = grupoActual;
+        }
+
+        String lista = GestorGrupos.formatearMiembros(nombreGrupo);
+        salida.writeUTF(lista);
+        salida.flush();
+    }
+
 }
