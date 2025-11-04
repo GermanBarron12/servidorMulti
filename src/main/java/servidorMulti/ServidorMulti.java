@@ -6,7 +6,7 @@ import java.net.Socket;
 import java.util.HashMap;
 
 public class ServidorMulti {
-    static HashMap<String, unCliente> clientes = new HashMap<>();
+    public static HashMap<String, unCliente> clientes = new HashMap<>();
  
     public static void main(String[] args) {
         DatabaseManager.inicializarBaseDatos();

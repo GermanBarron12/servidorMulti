@@ -25,4 +25,4 @@ public class CommandValidator {
         String[] parts = message.split(" ", 2);
         return parts.length == 2 ? parts[1].trim() : null;
     }
-}
+}       
