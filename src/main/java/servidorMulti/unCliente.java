@@ -57,6 +57,7 @@ public class unCliente implements Runnable {
         while (true) {
             String message = entrada.readUTF();
 
+            // Comandos especiales que no requieren autenticación ni cuentan
             if (message.equals("/ayuda")) {
                 showHelp();
                 continue;
@@ -68,18 +69,47 @@ public class unCliente implements Runnable {
                 break;
             }
 
+            // ✅ SIEMPRE permitir autenticación (no cuenta como mensaje)
+            if (isAuthenticationCommand(message)) {
+                processCommand(message);
+                continue;
+            }
+
+            // ✅ Si es un comando (empieza con /), procesarlo sin contar
+            if (message.startsWith("/")) {
+                // Comandos requieren autenticación (excepto /registro y /login)
+                if (!session.isAuthenticated()) {
+                    salida.writeUTF("Debes autenticarte primero. Usa: /registro o /login");
+                    salida.flush();
+                    continue;
+                }
+                processCommand(message);
+                continue;
+            }
+
+            // ✅ LÍMITE SOLO PARA MENSAJES DE CHAT (no comandos)
             if (!session.isAuthenticated() && !session.canSendMessage()) {
                 salida.writeUTF("Limite alcanzado. Usa: /registro o /login");
                 salida.flush();
                 continue;
             }
 
+            // ✅ Incrementar SOLO si es mensaje de chat y no está autenticado
             if (!session.isAuthenticated()) {
                 session.incrementMessagesSent();
             }
 
-            processCommand(message);
+            // Procesar mensaje de chat
+            if (message.startsWith("@")) {
+                privateMessageHandler.sendPrivateMessage(message);
+            } else {
+                messageDistributor.distributeBroadcastMessage(message);
+            }
         }
+    }
+
+    private boolean isAuthenticationCommand(String message) {
+        return message.startsWith("/registro ") || message.startsWith("/login ");
     }
 
     private void processCommand(String message) throws IOException {
@@ -127,10 +157,6 @@ public class unCliente implements Runnable {
             commandProcessor.processMyGroups();
         } else if (message.startsWith("/miembros")) {
             commandProcessor.processMembers(message);
-        } else if (message.startsWith("@")) {
-            privateMessageHandler.sendPrivateMessage(message);
-        } else {
-            messageDistributor.distributeBroadcastMessage(message);
         }
     }
 
@@ -229,7 +255,7 @@ public class unCliente implements Runnable {
     }
 
     private void removeClientFromServer() {
-        ServidorMulti.clientes.remove(idCliente);
+        ServidorMulti.removeCliente(idCliente);
     }
 
     private void closeConnections() {
@@ -241,7 +267,7 @@ public class unCliente implements Runnable {
     }
 
     private unCliente findClientByUsername(String username) {
-        for (unCliente c : ServidorMulti.clientes.values()) {
+        for (unCliente c : ServidorMulti.getClientes().values()) {
             if (c.isAutenticado() && c.getNombreUsuario() != null && 
                 c.getNombreUsuario().equals(username)) {
                 return c;

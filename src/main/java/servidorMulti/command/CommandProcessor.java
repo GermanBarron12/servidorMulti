@@ -155,7 +155,7 @@ public class CommandProcessor {
     public void processOnlineUsers() throws IOException {
         if (!requireAuthentication()) return;
 
-        String list = DatabaseManager.obtenerUsuariosConectados(ServidorMulti.clientes);
+        String list = DatabaseManager.obtenerUsuariosConectados();
         int totalConnected = countOnlineUsers();
 
         sendMessage("-------- USUARIOS ONLINE --------");

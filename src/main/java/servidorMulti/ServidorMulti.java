@@ -17,7 +17,6 @@ public class ServidorMulti {
         try (ServerSocket servidorSocket = new ServerSocket(puerto)) {
             
             System.out.println("-------- SERVIDOR CHAT INICIADO --------");
-            
             System.out.println("Puerto: " + puerto);
             System.out.println("Usuarios: " + DatabaseManager.contarUsuarios());
             System.out.println("Esperando conexiones...\n");
@@ -38,5 +37,15 @@ public class ServidorMulti {
         } catch (IOException e) {
             System.err.println("[ERROR] " + e.getMessage());
         }
+    }
+    
+    // METODOS PARA ACCEDER A CLIENTES
+    public static HashMap<String, unCliente> getClientes() {
+        return clientes;
+    }
+    
+    public static void removeCliente(String id) {
+        clientes.remove(id);
+        System.out.println("[SERVIDOR] Cliente #" + id + " removido");
     }
 }

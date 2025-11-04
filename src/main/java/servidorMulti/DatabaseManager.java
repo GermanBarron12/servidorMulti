@@ -7,8 +7,7 @@ public class DatabaseManager {
     private static final String DB_URL = "jdbc:sqlite:chat_usuarios.db";
 
     public static void inicializarBaseDatos() {
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             Statement stmt = conn.createStatement()) {
+        try (Connection conn = DriverManager.getConnection(DB_URL); Statement stmt = conn.createStatement()) {
 
             crearTablaUsuarios(stmt);
             crearTablaBloqueos(stmt);
@@ -126,8 +125,7 @@ public class DatabaseManager {
         String sqlCheck = "SELECT COUNT(*) FROM grupos WHERE nombre = 'Todos'";
         String sqlInsert = "INSERT INTO grupos (nombre, creador, es_sistema) VALUES ('Todos', 'SYSTEM', 1)";
 
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             Statement stmt = conn.createStatement()) {
+        try (Connection conn = DriverManager.getConnection(DB_URL); Statement stmt = conn.createStatement()) {
 
             ResultSet rs = stmt.executeQuery(sqlCheck);
             if (rs.next() && rs.getInt(1) == 0) {
@@ -145,12 +143,10 @@ public class DatabaseManager {
     }
 
     // ============== USUARIOS ==============
-    
     public static boolean registrarUsuario(String usuario, String password) {
         String sql = "INSERT INTO usuarios (usuario, password) VALUES (?, ?)";
 
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, usuario);
             pstmt.setString(2, password);
@@ -171,8 +167,7 @@ public class DatabaseManager {
     public static boolean verificarLogin(String usuario, String password) {
         String sql = "SELECT password FROM usuarios WHERE usuario = ?";
 
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, usuario);
             ResultSet rs = pstmt.executeQuery();
@@ -191,8 +186,7 @@ public class DatabaseManager {
     public static boolean usuarioExiste(String usuario) {
         String sql = "SELECT COUNT(*) FROM usuarios WHERE usuario = ?";
 
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, usuario);
             ResultSet rs = pstmt.executeQuery();
@@ -208,9 +202,7 @@ public class DatabaseManager {
     public static int contarUsuarios() {
         String sql = "SELECT COUNT(*) FROM usuarios";
 
-        try (Connection conn = getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+        try (Connection conn = getConnection(); Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
 
             return rs.next() ? rs.getInt(1) : 0;
 
@@ -224,9 +216,7 @@ public class DatabaseManager {
         StringBuilder lista = new StringBuilder();
         int contador = 0;
 
-        try (Connection conn = getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+        try (Connection conn = getConnection(); Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
                 if (lista.length() > 0) {
@@ -246,18 +236,15 @@ public class DatabaseManager {
         }
     }
 
-    public static String obtenerUsuariosConectados(java.util.HashMap<String, ?> clientes) {
+    public static String obtenerUsuariosConectados() {
         StringBuilder lista = new StringBuilder();
 
-        for (Object obj : clientes.values()) {
-            if (obj instanceof servidorMulti.unCliente) {
-                servidorMulti.unCliente cliente = (servidorMulti.unCliente) obj;
-                if (cliente.isAutenticado() && cliente.getNombreUsuario() != null) {
-                    if (lista.length() > 0) {
-                        lista.append(", ");
-                    }
-                    lista.append(cliente.getNombreUsuario());
+        for (servidorMulti.unCliente cliente : ServidorMulti.getClientes().values()) {
+            if (cliente.isAutenticado() && cliente.getNombreUsuario() != null) {
+                if (lista.length() > 0) {
+                    lista.append(", ");
                 }
+                lista.append(cliente.getNombreUsuario());
             }
         }
 
@@ -265,7 +252,6 @@ public class DatabaseManager {
     }
 
     // ============== BLOQUEOS ==============
-    
     public static int bloquearUsuario(String bloqueador, String bloqueado) {
         if (bloqueador.equals(bloqueado)) {
             return -1;
@@ -279,8 +265,7 @@ public class DatabaseManager {
 
         String sql = "INSERT INTO bloqueos (usuario_bloqueador, usuario_bloqueado) VALUES (?, ?)";
 
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, bloqueador);
             pstmt.setString(2, bloqueado);
@@ -302,8 +287,7 @@ public class DatabaseManager {
 
         String sql = "DELETE FROM bloqueos WHERE usuario_bloqueador = ? AND usuario_bloqueado = ?";
 
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, desbloqueador);
             pstmt.setString(2, desbloqueado);
@@ -324,8 +308,7 @@ public class DatabaseManager {
     public static boolean estaBloquedo(String bloqueador, String bloqueado) {
         String sql = "SELECT COUNT(*) FROM bloqueos WHERE usuario_bloqueador = ? AND usuario_bloqueado = ?";
 
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, bloqueador);
             pstmt.setString(2, bloqueado);
@@ -342,8 +325,7 @@ public class DatabaseManager {
         String sql = "SELECT usuario_bloqueado FROM bloqueos WHERE usuario_bloqueador = ?";
         StringBuilder lista = new StringBuilder();
 
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, usuario);
             ResultSet rs = pstmt.executeQuery();
@@ -365,8 +347,7 @@ public class DatabaseManager {
     public static int contarBloqueados(String usuario) {
         String sql = "SELECT COUNT(*) FROM bloqueos WHERE usuario_bloqueador = ?";
 
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, usuario);
             ResultSet rs = pstmt.executeQuery();
@@ -379,12 +360,10 @@ public class DatabaseManager {
     }
 
     // ============== ESTADISTICAS DEL GATO ==============
-    
     public static void inicializarEstadisticas(String usuario) {
         String sql = "INSERT OR IGNORE INTO estadisticas_gato (usuario, victorias, empates, derrotas, puntos) VALUES (?, 0, 0, 0, 0)";
 
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, usuario);
             pstmt.executeUpdate();
@@ -458,8 +437,7 @@ public class DatabaseManager {
         StringBuilder ranking = new StringBuilder();
         int posicion = 1;
 
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setInt(1, limite);
             ResultSet rs = pstmt.executeQuery();
@@ -519,8 +497,7 @@ public class DatabaseManager {
         int victoriasJ2 = 0;
         int empates = 0;
 
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, jugador1);
             pstmt.setString(2, jugador2);
