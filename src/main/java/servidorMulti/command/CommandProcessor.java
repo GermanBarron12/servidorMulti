@@ -3,6 +3,7 @@ package servidorMulti.command;
 import servidorMulti.*;
 import servidorMulti.grupos.*;
 import servidorMulti.session.ClientSession;
+import servidorMulti.session.GestorSesiones;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -45,19 +46,40 @@ public class CommandProcessor {
             return;
         }
 
-        if (DatabaseManager.registrarUsuario(username, password)) {
-            session.setAuthenticated(true);
-            session.setUsername(username);
-            session.resetMessagesSent();
-            
-            sendMessage("Registro exitoso. Bienvenido, " + username + "!");
-            sendMessage("Ahora puedes enviar mensajes ilimitados.");
-            
-            GrupoDAO.unirseGrupo(username, "Todos");
-            session.setCurrentGroup("Todos");
-        } else {
+        // Verificar si ya existe el usuario
+        if (DatabaseManager.usuarioExiste(username)) {
             sendMessage("El usuario '" + username + "' ya existe.");
+            return;
         }
+
+        // Registrar en base de datos
+        if (!DatabaseManager.registrarUsuario(username, password)) {
+            sendMessage("Error al registrar usuario");
+            return;
+        }
+
+        // Verificar si ya tiene sesion activa
+        if (GestorSesiones.tieneSesionActiva(username)) {
+            sendMessage("Este usuario ya esta conectado desde otro lugar");
+            sendMessage("Cierra la otra sesion primero");
+            return;
+        }
+
+        // Registrar sesion
+        if (!GestorSesiones.registrarSesion(username, client)) {
+            sendMessage("Error: No se pudo iniciar sesion");
+            return;
+        }
+
+        session.setAuthenticated(true);
+        session.setUsername(username);
+        session.resetMessagesSent();
+        
+        sendMessage("Registro exitoso. Bienvenido, " + username + "!");
+        sendMessage("Ahora puedes enviar mensajes ilimitados.");
+        
+        GrupoDAO.unirseGrupo(username, "Todos");
+        session.setCurrentGroup("Todos");
     }
 
     public void processLogin(String message) throws IOException {
@@ -78,6 +100,21 @@ public class CommandProcessor {
 
         if (!DatabaseManager.verificarLogin(username, password)) {
             sendMessage("Contrasena incorrecta.");
+            return;
+        }
+
+        // ✅ VERIFICAR SI YA ESTÁ CONECTADO
+        if (GestorSesiones.tieneSesionActiva(username)) {
+            sendMessage("========================================");
+            sendMessage("Este usuario ya esta conectado");
+            sendMessage("Cierra la otra sesion primero");
+            sendMessage("========================================");
+            return;
+        }
+
+        // Registrar sesion
+        if (!GestorSesiones.registrarSesion(username, client)) {
+            sendMessage("Error: No se pudo iniciar sesion");
             return;
         }
 
@@ -156,21 +193,11 @@ public class CommandProcessor {
         if (!requireAuthentication()) return;
 
         String list = DatabaseManager.obtenerUsuariosConectados();
-        int totalConnected = countOnlineUsers();
+        int totalConnected = GestorSesiones.contarSesiones();
 
         sendMessage("-------- USUARIOS ONLINE --------");
         sendMessage("Conectados: " + totalConnected + " usuarios");
         sendMessage("*" + list);
-    }
-
-    private int countOnlineUsers() {
-        int count = 0;
-        for (unCliente cliente : ServidorMulti.clientes.values()) {
-            if (cliente.isAutenticado() && cliente.getNombreUsuario() != null) {
-                count++;
-            }
-        }
-        return count;
     }
 
     // ========== JUEGO GATO ==========
@@ -643,13 +670,7 @@ public class CommandProcessor {
     }
 
     private unCliente findClientByUsername(String username) {
-        for (unCliente c : ServidorMulti.clientes.values()) {
-            if (c.isAutenticado() && c.getNombreUsuario() != null && 
-                c.getNombreUsuario().equals(username)) {
-                return c;
-            }
-        }
-        return null;
+        return GestorSesiones.obtenerCliente(username);
     }
 
     private void sendMessage(String message) throws IOException {
