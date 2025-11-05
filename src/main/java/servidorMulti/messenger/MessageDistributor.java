@@ -3,6 +3,7 @@ package servidorMulti.messenger;
 import servidorMulti.*;
 import servidorMulti.grupos.MensajeDAO;
 import servidorMulti.session.ClientSession;
+import servidorMulti.session.GestorSesiones;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -29,7 +30,7 @@ public class MessageDistributor {
     private void distributeAnonymousMessage(String message) throws IOException {
         String sender = "Cliente #" + session.getClientId();
 
-        for (unCliente client : ServidorMulti.clientes.values()) {
+        for (unCliente client : ServidorMulti.getClientes().values()) {
             if (shouldReceiveAnonymousMessage(client)) {
                 client.getSalida().writeUTF("[" + sender + "]: " + message);
                 client.getSalida().flush();
@@ -51,7 +52,7 @@ public class MessageDistributor {
     }
 
     private void distributeToGroupMembers(String message) throws IOException {
-        for (unCliente client : ServidorMulti.clientes.values()) {
+        for (unCliente client : ServidorMulti.getClientes().values()) {
             if (shouldReceiveGroupMessage(client)) {
                 client.getSalida().writeUTF("[" + session.getUsername() + "]: " + message);
                 client.getSalida().flush();
