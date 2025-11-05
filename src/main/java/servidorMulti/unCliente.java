@@ -4,6 +4,7 @@ import servidorMulti.command.CommandProcessor;
 import servidorMulti.messenger.MessageDistributor;
 import servidorMulti.messenger.PrivateMessageHandler;
 import servidorMulti.session.ClientSession;
+import servidorMulti.session.GestorSesiones;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -15,19 +16,19 @@ public class unCliente implements Runnable {
     private final DataOutputStream salida;
     private final DataInputStream entrada;
     private final String idCliente;
-    
+
     private final ClientSession session;
     private final CommandProcessor commandProcessor;
     private final MessageDistributor messageDistributor;
     private final PrivateMessageHandler privateMessageHandler;
-    
+
     private boolean enPartida = false;
 
     public unCliente(Socket socket, String id) throws IOException {
         this.salida = new DataOutputStream(socket.getOutputStream());
         this.entrada = new DataInputStream(socket.getInputStream());
         this.idCliente = id;
-        
+
         this.session = new ClientSession(id);
         this.commandProcessor = new CommandProcessor(salida, session, this);
         this.messageDistributor = new MessageDistributor(salida, session);
@@ -57,7 +58,7 @@ public class unCliente implements Runnable {
         while (true) {
             String message = entrada.readUTF();
 
-            // Comandos especiales que no requieren autenticación ni cuentan
+            // Comandos especiales que no requieren autenticacion ni cuentan
             if (message.equals("/ayuda")) {
                 showHelp();
                 continue;
@@ -69,15 +70,15 @@ public class unCliente implements Runnable {
                 break;
             }
 
-            // ✅ SIEMPRE permitir autenticación (no cuenta como mensaje)
+            // SIEMPRE permitir autenticacion (no cuenta como mensaje)
             if (isAuthenticationCommand(message)) {
                 processCommand(message);
                 continue;
             }
 
-            // ✅ Si es un comando (empieza con /), procesarlo sin contar
+            // Si es un comando (empieza con /), procesarlo sin contar
             if (message.startsWith("/")) {
-                // Comandos requieren autenticación (excepto /registro y /login)
+                // Comandos requieren autenticacion (excepto /registro y /login)
                 if (!session.isAuthenticated()) {
                     salida.writeUTF("Debes autenticarte primero. Usa: /registro o /login");
                     salida.flush();
@@ -87,14 +88,14 @@ public class unCliente implements Runnable {
                 continue;
             }
 
-            // ✅ LÍMITE SOLO PARA MENSAJES DE CHAT (no comandos)
+            // LIMITE SOLO PARA MENSAJES DE CHAT (no comandos)
             if (!session.isAuthenticated() && !session.canSendMessage()) {
                 salida.writeUTF("Limite alcanzado. Usa: /registro o /login");
                 salida.flush();
                 continue;
             }
 
-            // ✅ Incrementar SOLO si es mensaje de chat y no está autenticado
+            // Incrementar SOLO si es mensaje de chat y no esta autenticado
             if (!session.isAuthenticated()) {
                 session.incrementMessagesSent();
             }
@@ -212,6 +213,12 @@ public class unCliente implements Runnable {
 
     private void cleanup() {
         cleanupGameSession();
+
+        //  CERRAR SESION DEL GESTOR
+        if (session.isAuthenticated() && session.getUsername() != null) {
+            GestorSesiones.cerrarSesion(session.getUsername());
+        }
+
         removeClientFromServer();
         closeConnections();
     }
@@ -222,11 +229,11 @@ public class unCliente implements Runnable {
         }
 
         JuegoGato game = GestorJuegos.obtenerPartida(session.getUsername());
-        
+
         if (game != null) {
             handleGameAbandonment(game);
         }
-        
+
         GestorJuegos.cancelarInvitacion(session.getUsername());
     }
 
@@ -234,20 +241,20 @@ public class unCliente implements Runnable {
         String opponent = game.getOponente(session.getUsername());
         game.terminarPorAbandono(session.getUsername());
 
-        unCliente opponentClient = findClientByUsername(opponent);
-        
+        unCliente opponentClient = GestorSesiones.obtenerCliente(opponent);
+
         if (opponentClient != null) {
             opponentClient.setEnPartida(false);
             notifyOpponentAbandonment(opponentClient, opponent);
         }
-        
+
         GestorJuegos.terminarPartida(session.getUsername());
     }
 
     private void notifyOpponentAbandonment(unCliente opponentClient, String opponent) {
         try {
-            opponentClient.getSalida().writeUTF(session.getUsername() + 
-                " se desconecto. Ganaste por abandono!, obtienes 2 puntos.");
+            opponentClient.getSalida().writeUTF(session.getUsername()
+                    + " se desconecto. Ganaste por abandono!, obtienes 2 puntos.");
             opponentClient.getSalida().writeUTF("Ahora puedes volver a chatear normalmente");
             opponentClient.getSalida().flush();
         } catch (IOException ignored) {
@@ -264,16 +271,6 @@ public class unCliente implements Runnable {
             salida.close();
         } catch (IOException ignored) {
         }
-    }
-
-    private unCliente findClientByUsername(String username) {
-        for (unCliente c : ServidorMulti.getClientes().values()) {
-            if (c.isAutenticado() && c.getNombreUsuario() != null && 
-                c.getNombreUsuario().equals(username)) {
-                return c;
-            }
-        }
-        return null;
     }
 
     // Getters para compatibilidad
