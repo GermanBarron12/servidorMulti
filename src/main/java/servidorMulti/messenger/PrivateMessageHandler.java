@@ -2,6 +2,7 @@ package servidorMulti.messenger;
 
 import servidorMulti.*;
 import servidorMulti.session.ClientSession;
+import servidorMulti.session.GestorSesiones;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -21,7 +22,7 @@ public class PrivateMessageHandler {
         String recipient = parts[0].substring(1);
         String content = parts.length > 1 ? parts[1] : "";
 
-        unCliente recipientClient = findClientByUsername(recipient);
+        unCliente recipientClient = GestorSesiones.obtenerCliente(recipient);
 
         if (recipientClient == null) {
             sendMessage("Usuario '" + recipient + "' no conectado");
@@ -93,16 +94,6 @@ public class PrivateMessageHandler {
         recipient.getSalida().flush();
 
         sendMessage("[Enviado a " + recipientName + "]");
-    }
-
-    private unCliente findClientByUsername(String username) {
-        for (unCliente c : ServidorMulti.clientes.values()) {
-            if (c.isAutenticado() && c.getNombreUsuario() != null && 
-                c.getNombreUsuario().equals(username)) {
-                return c;
-            }
-        }
-        return null;
     }
 
     private void sendMessage(String message) throws IOException {
