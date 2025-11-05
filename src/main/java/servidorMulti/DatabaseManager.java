@@ -239,7 +239,7 @@ public class DatabaseManager {
     public static String obtenerUsuariosConectados() {
         StringBuilder lista = new StringBuilder();
 
-        for (servidorMulti.unCliente cliente : ServidorMulti.getClientes().values()) {
+        for (servidorMulti.unCliente cliente : servidorMulti.session.GestorSesiones.obtenerSesiones().values()) {
             if (cliente.isAutenticado() && cliente.getNombreUsuario() != null) {
                 if (lista.length() > 0) {
                     lista.append(", ");
