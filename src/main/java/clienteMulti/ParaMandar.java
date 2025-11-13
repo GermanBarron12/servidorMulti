@@ -8,6 +8,7 @@ import java.net.Socket;
 
 public class ParaMandar implements Runnable {
 
+    public static final int MENSAJES_GRATIS_MAXIMOS = 3;
     private final BufferedReader teclado = new BufferedReader(new InputStreamReader(System.in));
     private final DataOutputStream salida;
     private final Socket socket;
@@ -62,7 +63,7 @@ public class ParaMandar implements Runnable {
                            /ayuda - Ver lista de comandos
                            salir - Cerrar conexion
                         ---------------------------------------
-                        """);
+                        """.formatted(MENSAJES_GRATIS_MAXIMOS));
 
             while (true) {
                 String mensaje = teclado.readLine();
@@ -99,8 +100,8 @@ public class ParaMandar implements Runnable {
                     autenticado = paraRecibir.isAutenticado();
                 }
 
-                if (!autenticado && mensajesEnviados >= 3) {
-                    System.out.println("\n Has alcanzado el limite de 3 mensajes");
+                if (!autenticado && mensajesEnviados >= MENSAJES_GRATIS_MAXIMOS) {
+                    System.out.println("\n Has alcanzado el limite de "+ MENSAJES_GRATIS_MAXIMOS +" mensajes");
                     System.out.println("Usa: /registro <usuario> <password>");
                     System.out.println("O:   /login <usuario> <password>\n");
                     continue;
@@ -111,7 +112,7 @@ public class ParaMandar implements Runnable {
 
                 if (!autenticado) {
                     mensajesEnviados++;
-                    int restantes = 3 - mensajesEnviados;
+                    int restantes = MENSAJES_GRATIS_MAXIMOS - mensajesEnviados;
                     if (restantes > 0) {
                         System.out.println(" (Te quedan " + restantes + " mensajes)");
                     }
