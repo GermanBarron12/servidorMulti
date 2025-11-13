@@ -103,7 +103,7 @@ public class CommandProcessor {
             return;
         }
 
-        // ✅ VERIFICAR SI YA ESTÁ CONECTADO
+        //  VERIFICAR SI YA ESTÁ CONECTADO
         if (GestorSesiones.tieneSesionActiva(username)) {
             sendMessage("========================================");
             sendMessage("Este usuario ya esta conectado");

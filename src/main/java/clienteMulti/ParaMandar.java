@@ -61,7 +61,7 @@ public class ParaMandar implements Runnable {
                            /ranking - Ver ranking general
                            /stats - <usuario1> <usuario2> - Comparar jugadores
                            /ayuda - Ver lista de comandos
-                           salir - Cerrar conexion
+                           /salir - Cerrar conexion
                         ---------------------------------------
                         """.formatted(MENSAJES_GRATIS_MAXIMOS));
 
@@ -88,7 +88,7 @@ public class ParaMandar implements Runnable {
                     continue;
                 }
 
-                if ("salir".equalsIgnoreCase(mensaje)) {
+                if ("/salir".equalsIgnoreCase(mensaje)) {
                     salida.writeUTF(mensaje);
                     salida.flush();
                     System.out.println("\n Cerrando conexion...");

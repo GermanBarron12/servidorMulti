@@ -64,7 +64,7 @@ public class unCliente implements Runnable {
                 continue;
             }
 
-            if ("salir".equalsIgnoreCase(message)) {
+            if ("/salir".equalsIgnoreCase(message)) {
                 salida.writeUTF("Hasta pronto!");
                 salida.flush();
                 break;
@@ -203,7 +203,7 @@ public class unCliente implements Runnable {
                       /stats - <usuario1> <usuario2> - Comparar jugadores
                        
                       /ayuda - Ver lista de comandos
-                      salir - Cerrar conexion
+                      /salir - Cerrar conexion
                      --------------------------------------
                      """;
 
