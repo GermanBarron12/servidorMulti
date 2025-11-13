@@ -1,6 +1,7 @@
 package servidorMulti.session;
 
 public class ClientSession {
+    private static final int MENSAJES_GRATIS_MAXIMOS = 3;
     private final String clientId;
     private boolean authenticated;
     private String username;
@@ -23,6 +24,10 @@ public class ClientSession {
     public int getMessagesSent() { return messagesSent; }
     public boolean isInGame() { return inGame; }
     public String getCurrentGroup() { return currentGroup; }
+    public static int getMensajesGratisMaximos(){
+        return MENSAJES_GRATIS_MAXIMOS;
+    }
+    
 
     // Setters
     public void setAuthenticated(boolean authenticated) { 
@@ -51,6 +56,13 @@ public class ClientSession {
     }
     
     public boolean canSendMessage() {
-        return authenticated || messagesSent < 3;
+        return authenticated || messagesSent < MENSAJES_GRATIS_MAXIMOS;
+    }
+    
+    public int getMensajesRestantes(){
+        if (authenticated){
+            return -1;
+        }
+        return MENSAJES_GRATIS_MAXIMOS - messagesSent;
     }
 }
