@@ -32,7 +32,7 @@ public class ParaMandar implements Runnable {
             System.out.println("""
                         -------- BIENVENIDO AL CHAT --------
 
-                        Tienes 3 mensajes gratis.
+                        Tienes %d mensajes gratis.
 
                          Comandos:
                            /registro <usuario> <password>
@@ -119,7 +119,8 @@ public class ParaMandar implements Runnable {
                 }
             }
         } catch (IOException ex) {
-            System.out.println("Error: " + ex.getMessage());
+            System.out.println("Error de conexion: " + ex.getMessage());
+            System.out.println("No se pudo comunicar con el servidor.");
         }
     }
 }

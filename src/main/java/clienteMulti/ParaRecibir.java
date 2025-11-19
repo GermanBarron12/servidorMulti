@@ -26,9 +26,12 @@ public class ParaRecibir implements Runnable {
                 System.out.println(mensaje);
             }
         } catch (IOException e) {
-            System.out.println("\n Conexion cerrada.");
+            System.out.println("\n Conexion con el servidor perdida.");
+            System.out.println("El servidor se ha desconectado o hay problemas de red");
         } finally {
-            try { entrada.close(); } catch (IOException ignored) {}
+            try { 
+                entrada.close();
+            } catch (IOException ignored) {}
         }
     }
     
