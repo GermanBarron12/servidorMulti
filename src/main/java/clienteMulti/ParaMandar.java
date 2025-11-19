@@ -119,7 +119,7 @@ public class ParaMandar implements Runnable {
                 }
             }
         } catch (IOException ex) {
-            System.out.println("Error de conexion: " + ex.getMessage());
+            System.out.println("Error de conexion: ");
             System.out.println("No se pudo comunicar con el servidor.");
         }
     }
