@@ -35,6 +35,12 @@ public class CommandProcessor {
 
         String username = parts[1];
         String password = parts[2];
+        
+        String usernameError = validator.getUserNameErrorMessage(username);
+        if (usernameError !=null){
+            sendMessage(usernameError);
+            return;
+        }
 
         if (!validator.isValidUsername(username)) {
             sendMessage("Usuario minimo 3 caracteres");
@@ -42,7 +48,7 @@ public class CommandProcessor {
         }
 
         if (!validator.isValidPassword(password)) {
-            sendMessage("Contrasena minimo 4 caracteres");
+            sendMessage("Contraseña minimo 4 caracteres");
             return;
         }
 
