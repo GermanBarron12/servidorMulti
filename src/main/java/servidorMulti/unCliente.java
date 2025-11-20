@@ -70,8 +70,17 @@ public class unCliente implements Runnable {
                 break;
             }
 
-            // SIEMPRE permitir autenticacion (no cuenta como mensaje)
+            // BLOQUEAR comandos de autenticacion si ya esta autenticado
             if (isAuthenticationCommand(message)) {
+                if (session.isAuthenticated()) {
+                    salida.writeUTF("========================================");
+                    salida.writeUTF("Ya has iniciado sesion como: " + session.getUsername());
+                    salida.writeUTF("No puedes usar /registro <usuario> <contraseña> o /login <usuario> <contraseña> nuevamente");
+                    salida.writeUTF("Si deseas cambiar de cuenta, usa /salir primero");
+                    salida.writeUTF("========================================");
+                    salida.flush();
+                    continue;
+                }
                 processCommand(message);
                 continue;
             }
@@ -80,7 +89,7 @@ public class unCliente implements Runnable {
             if (message.startsWith("/")) {
                 // Comandos requieren autenticacion (excepto /registro y /login)
                 if (!session.isAuthenticated()) {
-                    salida.writeUTF("Debes autenticarte primero. Usa: /registro o /login");
+                    salida.writeUTF("Debes autenticarte primero. Usa: /registro <usuario> <contraseña> o /login <usuario> <contraseña>");
                     salida.flush();
                     continue;
                 }
@@ -110,7 +119,8 @@ public class unCliente implements Runnable {
     }
 
     private boolean isAuthenticationCommand(String message) {
-        return message.startsWith("/registro ") || message.startsWith("/login ");
+        return message.startsWith("/registro ") || message.startsWith("/login ")
+                || message.equals("/registro") || message.equals("/login");
     }
 
     private void processCommand(String message) throws IOException {
