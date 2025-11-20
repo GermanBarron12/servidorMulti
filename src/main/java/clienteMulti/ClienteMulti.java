@@ -9,7 +9,7 @@ public class ClienteMulti {
 
         Socket s = null;
         try {
-            s = new Socket("localhost", 8080);
+            s = new Socket("10.22.13.189", 8080);
 
             ParaMandar paraMandar = new ParaMandar(s);
             ParaRecibir paraRecibir = new ParaRecibir(s);
